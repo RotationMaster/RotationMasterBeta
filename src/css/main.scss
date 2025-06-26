@@ -358,9 +358,10 @@ html, body {
 }
 
 a.subtle-link {
-  color: #888; 
+  color: #888;
   text-decoration: none; /* Removes underline */
   font-size: 10px; /* Adjust font size */
+  margin: 20px;
 }
 
 a.subtle-link:hover {

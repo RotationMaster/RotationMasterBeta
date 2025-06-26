@@ -940,7 +940,7 @@ function updateLocation(e : any) {
   );
 }
 
-const currentVersion = '2.2.0';
+const currentVersion = '2.2.2';
 const settingsObject = {
   settingsHeader: sauce.createHeading(
     'h2',
