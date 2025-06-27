@@ -940,7 +940,7 @@ function updateLocation(e : any) {
   );
 }
 
-const currentVersion = '2.2.2';
+const currentVersion = '2.2.3';
 const settingsObject = {
   settingsHeader: sauce.createHeading(
     'h2',
@@ -1199,9 +1199,9 @@ async function startOverlay() {
         ?.getImageData(0, 0, dataUrl.width, dataUrl.height);
 
       if (base64ImageString) {
-        alt1.overLaySetGroup('region');
-        alt1.overLayFreezeGroup('region');
-        alt1.overLayClearGroup('region');
+        alt1.overLaySetGroup('rotMasterRegion');
+        alt1.overLayFreezeGroup('rotMasterRegion');
+        alt1.overLayClearGroup('rotMasterRegion');
         alt1.overLayImage(
           overlayPosition.x,
           overlayPosition.y,
@@ -1209,10 +1209,10 @@ async function startOverlay() {
           base64ImageString.width,
           refreshRate
         );
-        alt1.overLayRefreshGroup('region');
+        alt1.overLayRefreshGroup('rotMasterRegion');
       } else {
-        alt1.overLayClearGroup('region');
-        alt1.overLayRefreshGroup('region');
+        alt1.overLayClearGroup('rotMasterRegion');
+        alt1.overLayRefreshGroup('rotMasterRegion');
       }
     } catch (e) {
       console.error(`html-to-image failed to capture`, e);
