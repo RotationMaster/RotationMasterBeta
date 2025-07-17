@@ -316,6 +316,7 @@ html, body {
   }
 
   .nisdropdown {
+    height: 20px;
     flex: 1; /* Allow the dropdown to grow and take up available space */
     min-width: 150px; /* Set a minimum width for the dropdown */
   }
@@ -327,6 +328,27 @@ html, body {
 
   .nisbutton {
     flex-shrink: 0; /* Prevent buttons from shrinking */
+  }
+
+  .ability-image-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .ability-note {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    color: #fff;
+    background: rgba(0,0,0,0.5);
+    text-align: center;
+    pointer-events: none;
+    font-size: clamp(8px, 2vw, 8px); // Responsive font size
+    margin: 0;
+    padding: 2px 0;
+    overflow-wrap: break-word;
+    white-space: normal;
   }
 
   .ability-image {
@@ -452,12 +474,34 @@ a.subtle-link:hover {
   object-fit: contain;
 }
 
+.dropdown-container:first-of-type .seperator-selector {
+  visibility: hidden;
+}
+
+.seperator-selector {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  padding: 0 !important;
+}
+
+.notes-input {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  padding: 0 !important;
+}
+
 .row-spacer {
   font-weight: bold;
   margin-right: 5px; /* Add spacing between the prefix and the first image */
   color: #F1F1F1; /* Adjust color as needed */
   display: flex; /* Ensure the prefix aligns with the images */
   align-items: center; /* Vertically align the prefix with the first image */
+}
+
+.rotation-preview .rotation-row:first-of-type .row-spacer:first-of-type {
+  display: none;
 }
 
 #toggle-details {

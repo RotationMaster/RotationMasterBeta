@@ -68,7 +68,9 @@ type Rotation = {
   data: Dropdown[];
 };
 type Dropdown = {
+  seperator: string | '→';
   selectedAbility: Ability | null; // The currently selected ability, or null if none is selected
+  notes: string | null;
 };
 type Ability = {
   Title: string;
@@ -280,6 +282,29 @@ const renderDropdowns = (rotationIndex: number) => {
     dropdownDiv.classList.add('dropdown-container');
     dropdownDiv.id = `dropdown-container-${rotationIndex}-${dropdownIndex}`;
 
+    // Seperator Selector
+    const seperatorSelector = document.createElement('select');
+    seperatorSelector.className = 'nisdropdown seperator-selector';
+    seperatorSelector.id = `seperator-selector-${rotationIndex}-${dropdownIndex}`;
+    
+    // Add options for common separators
+    const separators = ['→', '+', '/', 's', 'r', ''];
+    separators.forEach((sep) => {
+      const option = document.createElement('option');
+      option.value = sep;
+      option.textContent = sep;
+      if (dropdown.seperator === sep) {
+        option.selected = true; // Set the selected option based on the dropdown's seperator
+      }
+      seperatorSelector.appendChild(option);
+    });
+
+    seperatorSelector.addEventListener('change', (e) => {
+      const selectedSeperator = (e.target as HTMLSelectElement).value;
+      dropdowns[dropdownIndex].seperator = selectedSeperator; // Update the seperator in the dropdown
+      renderRotationPreview(rotationIndex); // Update the preview
+    });
+
     //Create the filter input
     const filterInput = document.createElement('input');
     filterInput.type = 'text';
@@ -347,6 +372,16 @@ const renderDropdowns = (rotationIndex: number) => {
       abilityImage.alt = dropdown.selectedAbility.Emoji;
     }
 
+    const notes = document.createElement('input');
+    notes.className = 'nisinput notes-input';
+    notes.placeholder = 'Note...';
+    notes.id = `notes-${rotationIndex}-${dropdownIndex}`;
+    notes.value = dropdown.notes || ''; // Initialize with existing notes or empty string
+    notes.addEventListener('input', (e) => {
+      dropdowns[dropdownIndex].notes = (e.target as HTMLTextAreaElement).value; // Update the notes in the dropdown
+      renderRotationPreview(rotationIndex); // Update the preview
+    });
+
     // Create the button group
     const buttonGroup = document.createElement('div');
     buttonGroup.className = 'button-group';
@@ -392,9 +427,11 @@ const renderDropdowns = (rotationIndex: number) => {
 
 
     // Add the select element to the dropdown div
+    dropdownDiv.appendChild(seperatorSelector);
     dropdownDiv.appendChild(filterInput);
     dropdownDiv.appendChild(selectElement);
     dropdownDiv.appendChild(abilityImage);
+    dropdownDiv.appendChild(notes);
     dropdownDiv.appendChild(buttonGroup);
 
     // Add the dropdown div to the container
@@ -498,7 +535,9 @@ const handleSaveRotation = () => {
     data: rotationSet.data.map((rotation) => ({
       ...rotation,
       data: rotation.data.map((dropdown) => ({
+        seperator: dropdown.seperator, // TODO: save properly
         selectedAbility: dropdown.selectedAbility,
+        notes: dropdown.notes // TODO: save properly
       })),
     }))
   };
@@ -547,6 +586,10 @@ const handleExportRotation = () => {
 };
 getById('exportButton')?.addEventListener('click', handleExportRotation);
 
+
+const defaultRotationSetName = "Rotation Set";
+const defaultRotationName = "Rotation";
+
 const handleImportRotation = () => {
   console.log("Importing Rotation");
 
@@ -568,72 +611,13 @@ const handleImportRotation = () => {
       if (typeof contents === "string") {
         try {
           let parsedData = JSON.parse(contents);
-          
+
           selectedIndex = 0; // Reset selected index to 0 when switching rotations
 
-          if (Array.isArray(parsedData)) {
-            // Handle old format (array of dropdowns or abilities)
-            if (
-              parsedData.length > 0 &&
-              parsedData[0].hasOwnProperty("selectedAbility")
-            ) {
-              console.log("Detected old format (array of dropdowns).");
-
-              // Map old data to full ability details
-              const data = parsedData
-                .map((item: any) => {
-                  const ability = abilities.find(
-                    (a: Ability) => a.Emoji === item.selectedAbility?.Emoji
-                  );
-                  return ability ? { selectedAbility: ability } as Dropdown : null;
-                })
-                .filter((item: any) => item !== null);
-
-              if (data) {
-                const rotationData: Dropdown[] = data as Dropdown[];
-
-                  // Update the current rotation set with the imported dropdowns
-                  rotationSet = {
-                    name: file.name,
-                    data: [
-                      {
-                        id: 0,
-                        name: file.name,
-                        data: rotationData,
-                      },
-                    ]
-                  };
-              }
-              
-            } else {
-              console.error("Invalid old format.");
-              alert("Invalid JSON file.");
-              return;
-            }
-          } else if (parsedData && parsedData.hasOwnProperty("name") && parsedData.hasOwnProperty("data")) {
-            // Handle new format (RotationSet)
-            console.log("Detected new format (RotationSet).");
-
-            // Update ability info from abilities.json in case images have changed
-            parsedData.data = parsedData.data.map((rotation: Rotation) => ({
-              ...rotation,
-              data: rotation.data.map((dropdown: Dropdown) => {
-                const ability = abilities.find(
-                  (a: Ability) => a.Emoji === dropdown.selectedAbility?.Emoji
-                );
-                return {
-                  selectedAbility: ability ? { ...ability } : null,
-                };
-              }),
-            }));
-
-            // Assign the parsed RotationSet to the current rotationSet
-            rotationSet = parsedData as RotationSet;
-          } else {
-            console.error("Invalid format.");
-            alert("Invalid JSON file.");
-            return;
-          }
+          // Assign the parsed RotationSet to the current rotationSet
+          rotationSet = parseRotationSetData(contents);
+          if (rotationSet.name == defaultRotationSetName)
+            rotationSet.name = file.name; // Set the name to the file name
 
           // Render the imported rotation set
           renderRotationContainers();
@@ -664,39 +648,147 @@ getById('importButton')?.addEventListener('click', handleImportRotation);
 const handleSwitchRotation = (rotationSetName: string) => {
   console.log(`Switching to RotationSet: ${rotationSetName}`);
 
-  selectedIndex = 0; // Reset selected index to 0 when switching rotations
+  try {
+    selectedIndex = 0; // Reset selected index to 0 when switching rotations
 
-  // Retrieve saved rotations from localStorage
-  const cachedRotations = localStorage.getItem('savedRotations');
-  const savedRotations: RotationSet[] = cachedRotations ? JSON.parse(cachedRotations) : [];
+    // Retrieve saved rotations from localStorage
+    const cachedRotations = localStorage.getItem('savedRotations');
 
-  // Find the RotationSet by name
-  const selectedRotationSet = savedRotations.find(
-    (rotationSet) => rotationSet.name === rotationSetName
-  );
+    const savedRotations: RotationSet[] = cachedRotations ? JSON.parse(cachedRotations) : [];
 
-  if (!selectedRotationSet) {
-    console.error(`RotationSet with name "${rotationSetName}" not found.`);
-    alert(`RotationSet "${rotationSetName}" does not exist.`);
-    return;
+
+
+    // Find the RotationSet by name
+    const selectedRotationSet = savedRotations.find(
+      (rotationSet) => rotationSet.name === rotationSetName
+    );
+
+    if (!selectedRotationSet) {
+      console.error(`RotationSet with name "${rotationSetName}" not found.`);
+      alert(`RotationSet "${rotationSetName}" does not exist.`);
+      return;
+    }
+
+    // Render the new rotation set
+    rotationSet = parseRotationSetData(selectedRotationSet);
+    if (rotationSet.name == defaultRotationSetName) // If the rotation set is imported, set the name to the selected rotation name
+      rotationSet.name = rotationSetName; // Set the name to the selected rotation name
+
+    renderRotationContainers();
+
+    // sed the rotation name to the selected rotation name
+    const rotationNameInput = getById('rotation-name') as HTMLInputElement;
+    if (rotationNameInput) {
+      rotationNameInput.value = rotationSet.name; // Set the input value to the selected rotation name
+    }
+
+    console.log(`Switched to RotationSet: ${rotationSetName}`);
+  } catch (err) {
+    console.error("Failed to switch rotation:", err);
   }
-
-  // Render the new rotation set
-  rotationSet = selectedRotationSet;
-  renderRotationContainers();
-
-  // sed the rotation name to the selected rotation name
-  const rotationNameInput = getById('rotation-name') as HTMLInputElement;
-  if (rotationNameInput) {
-    rotationNameInput.value = rotationSet.name; // Set the input value to the selected rotation name
-  }
-
-  console.log(`Switched to RotationSet: ${rotationSetName}`);
 };
 getById('savedRotations')?.addEventListener('change', (e) => {
   const selectedRotation = (e.target as HTMLSelectElement).value;
   handleSwitchRotation(selectedRotation);
 });
+
+function parseRotationSetData(rawData: any): RotationSet {
+
+  // If rawData is a string, parse it as JSON
+  if (typeof rawData === "string") {
+    try {
+      rawData = JSON.parse(rawData);
+    } catch {
+      throw new Error("Invalid JSON string for rotation data.");
+    }
+  }
+
+  // Format 1: RotationSet (already normalized)
+  if (
+    typeof rawData === "object" &&
+    rawData !== null &&
+    typeof rawData.name === "string" &&
+    Array.isArray(rawData.data)
+  ) {
+    //ensure each rotation in rawData.data is of type Rotation, if not format correctly
+    if (rawData.data.length === 0)
+      rawData.data = [];
+    else if (rawData.data[0].hasOwnProperty('Emoji')) //string of ablilities
+    {
+      rawData.data = [{
+        id: 0,
+        name: defaultRotationName,
+        data: rawData.data.map((ability: Ability) => ({
+          seperator: '→',
+          selectedAbility: ability,
+          notes: null
+        })) as Dropdown[]
+      }]
+    }
+
+    return rawData as RotationSet;
+  }
+
+  // Format 2: Object with abilities in data property
+  if (
+    typeof rawData === "object" &&
+    rawData !== null &&
+    Array.isArray(rawData.data) &&
+    rawData.data.length > 0 &&
+    typeof rawData.data[0].Title === "string"
+  ) {
+    const dropdowns: Dropdown[] = rawData.data.map((ability: Ability) => ({
+      seperator: '→',
+      selectedAbility: ability,
+      notes: null
+    }));
+
+    const rotation: Rotation = {
+      id: 0,
+      name: rawData.name ?? "Imported Rotation",
+      data: dropdowns
+    };
+
+    return {
+      name: rawData.name ?? defaultRotationSetName,
+      data: [rotation]
+    };
+  }
+
+  // Format 3: Array of Dropdowns or Abilities
+  if (Array.isArray(rawData) && rawData.length > 0) {
+    // If it's an array of abilities
+    if (typeof rawData[0].Title === "string") {
+      const dropdowns: Dropdown[] = rawData.map((ability: Ability) => ({
+        seperator: '→',
+        selectedAbility: ability,
+        notes: null
+      }));
+
+      return {
+        name: "Imported Rotation Set",
+        data: [{
+          id: 0,
+          name: "Rotation 1",
+          data: dropdowns
+        }]
+      };
+    }
+    // If it's an array of dropdowns
+    if (rawData[0].selectedAbility) {
+      return {
+        name: "Imported Rotation Set",
+        data: [{
+          id: 0,
+          name: "Rotation 1",
+          data: rawData as Dropdown[]
+        }]
+      };
+    }
+  }
+
+  throw new Error("Invalid rotation data format.");
+}
 
 const addDropdown = (rotationIndex: number) => {
   // Get the specific rotation from the rotation set
@@ -708,7 +800,9 @@ const addDropdown = (rotationIndex: number) => {
 
   // Create a new dropdown object
   const newDropdown: Dropdown = {
+    seperator: '→', // Default separator
     selectedAbility: null, // Initialize with no selected ability
+    notes: null, // Initialize with no notes
   };
   // Push the new dropdown to the rotation's data array
   rotation.data.push(newDropdown);
@@ -788,8 +882,7 @@ const renderRotationPreview = (rotationIndex: number) => {
 
   const numImagesPerRow = sauce.getSetting('ablitiesPerRow') || 8;
   const selectedAbilities = rotation.data.filter((dropdown: Dropdown) => dropdown.selectedAbility !== null);
-  const rowSpacer = '<span class="row-spacer"> > </span>';
-
+  
   const detailsContainer = document.getElementById(`rotation-details-${rotationIndex}`);
   if (!detailsContainer) {
     console.error(`Details container for rotation index ${rotationIndex} not found.`);
@@ -813,12 +906,17 @@ const renderRotationPreview = (rotationIndex: number) => {
       .slice(i, i + numImagesPerRow)
       .map(
         (dropdown: Dropdown) => {
-          return `<img class="ability-image" src="${dropdown.selectedAbility!.Src}" alt="${dropdown.selectedAbility!.Emoji }" title="${dropdown.selectedAbility!.Emoji}">`
+          return `
+        <span class="row-spacer">${dropdown.seperator ?? "→"}</span>
+        <span class="ability-image-container" style="position: relative; display: inline-block;">
+          <img class="ability-image" src="${dropdown.selectedAbility!.Src}" alt="${dropdown.selectedAbility!.Emoji}" title="${dropdown.selectedAbility!.Emoji}">
+          ${dropdown.notes ? `<p class="ability-note">${dropdown.notes}</p>` : ""}
+        </span>
+      `;
         })
-      .join(rowSpacer);
+      .join('')
 
-    const rowPrefix = i === 0 ? '' : rowSpacer; // Add row spacer only if it's not the first row
-    rows.push(`<div class="rotation-row">${rowPrefix}${rowImages}</div>`);
+    rows.push(`<div class="rotation-row">${rowImages}</div>`);
   }
 
   if (rows.length === 0) {
@@ -940,7 +1038,7 @@ function updateLocation(e : any) {
   );
 }
 
-const currentVersion = '2.2.3';
+const currentVersion = '2.3.0';
 const settingsObject = {
   settingsHeader: sauce.createHeading(
     'h2',
