@@ -73,6 +73,7 @@ type Dropdown = {
   notes: string | null;
 };
 type Ability = {
+
   Title: string;
   Emoji: string;       // The emoji representing the ability
   EmojiId: string;     // A unique identifier for the ability
@@ -203,7 +204,18 @@ const renderRotationContainers = () => {
         if (selectedIndex === index) {
           selectedIndex = 0;
         }
+        // Sort by id
+        rotationSet.data.sort((a, b) => a.id - b.id);
+
         rotationSet.data.splice(index, 1);
+
+        // Decrement id for rotations with id greater than deleted index
+        rotationSet.data.forEach((rotation) => {
+          if (rotation.id > index) {
+            rotation.id -= 1;
+          }
+        });
+
         hideAllButIndex(0)
       }
     };
@@ -286,9 +298,9 @@ const renderDropdowns = (rotationIndex: number) => {
     const seperatorSelector = document.createElement('select');
     seperatorSelector.className = 'nisdropdown seperator-selector';
     seperatorSelector.id = `seperator-selector-${rotationIndex}-${dropdownIndex}`;
-    
+
     // Add options for common separators
-    const separators = ['→', '+', '/', 's', 'r', ''];
+    const separators = ['→', '+', '/', 's', 'r', 'tc', ''];
     separators.forEach((sep) => {
       const option = document.createElement('option');
       option.value = sep;
@@ -297,6 +309,16 @@ const renderDropdowns = (rotationIndex: number) => {
         option.selected = true; // Set the selected option based on the dropdown's seperator
       }
       seperatorSelector.appendChild(option);
+    });
+
+    separators.forEach((sep) => {
+      const newlineOption = document.createElement('option');
+      newlineOption.value = '↵ ' + sep;
+      newlineOption.textContent = '↵ ' + sep;
+      if (dropdown.seperator === '↵ ' + sep) {
+        newlineOption.selected = true; // Set the selected option based on the dropdown's seperator
+      }
+      seperatorSelector.appendChild(newlineOption);
     });
 
     seperatorSelector.addEventListener('change', (e) => {
@@ -900,23 +922,33 @@ const renderRotationPreview = (rotationIndex: number) => {
   rotPreview.id = `rotation-preview-${rotationIndex}`;
 
   const rows: string[] = [];
+  let currentRow: string[] = [];
+  let imagesInRow = 0;
 
-  for (let i = 0; i < selectedAbilities.length; i += numImagesPerRow) {
-    const rowImages = selectedAbilities
-      .slice(i, i + numImagesPerRow)
-      .map(
-        (dropdown: Dropdown) => {
-          return `
-        <span class="row-spacer">${dropdown.seperator ?? "→"}</span>
-        <span class="ability-image-container" style="position: relative; display: inline-block;">
-          <img class="ability-image" src="${dropdown.selectedAbility!.Src}" alt="${dropdown.selectedAbility!.Emoji}" title="${dropdown.selectedAbility!.Emoji}">
-          ${dropdown.notes ? `<p class="ability-note">${dropdown.notes}</p>` : ""}
-        </span>
-      `;
-        })
-      .join('')
+  for (let i = 0; i < selectedAbilities.length; i++) {
+    const dropdown = selectedAbilities[i];
 
-    rows.push(`<div class="rotation-row">${rowImages}</div>`);
+    // Check if  the current row is full or if the seperator is '↵'
+    if (dropdown.seperator.includes('↵') || imagesInRow >= numImagesPerRow) {
+      rows.push(`<div class="rotation-row">${currentRow.join('')}</div>`);
+      currentRow = [];
+      imagesInRow = 0;
+    }
+
+    // Add image to current row
+    currentRow.push(`
+      <span class="row-spacer">${dropdown.seperator.replace('↵ ', '') ?? "→"}</span>
+      <span class="ability-image-container" style="position: relative; display: inline-block;">
+        <img class="ability-image" src="${dropdown.selectedAbility!.Src}" alt="${dropdown.selectedAbility!.Emoji}" title="${dropdown.selectedAbility!.Emoji}">
+        ${dropdown.notes ? `<p class="ability-note">${dropdown.notes}</p>` : ""}
+      </span>
+    `);
+    imagesInRow++;
+  }
+
+  // Push any remaining images in the last row
+  if (currentRow.length > 0) {
+    rows.push(`<div class="rotation-row">${currentRow.join('')}</div>`);
   }
 
   if (rows.length === 0) {
@@ -1038,7 +1070,7 @@ function updateLocation(e : any) {
   );
 }
 
-const currentVersion = '2.3.0';
+const currentVersion = '2.3.1';
 const settingsObject = {
   settingsHeader: sauce.createHeading(
     'h2',
