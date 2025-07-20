@@ -17,16 +17,17 @@ You can set up your rotation in the window when it opens by adding new abilities
 
 This idea expanded so you can now share rotations via a json file and the export/import buttons.
 
-![image](https://github.com/user-attachments/assets/f8aa2425-3ea2-4672-8dba-5ed63c1a9d7b)
+<img width="1068" height="967" alt="image" src="https://github.com/user-attachments/assets/4dfc1852-9253-4c27-aa31-c89ece7a1be6" />
 
 Then when you are happy you can position the overlay as you wish with the set ovelay position button and minimise the window.
 
-![image](https://github.com/user-attachments/assets/d19e2a4c-05d4-420f-8b2c-e0f48299bc6d)
+<img width="706" height="152" alt="image" src="https://github.com/user-attachments/assets/f0505191-a147-48f9-a8e4-d7c1c29eb091" />
+
 
 You can cycle between rotations by pressing the main alt1 keybind (default alt + 1)
 
 ## Future Aims for the project:
-- Better overlay notation, ability to add short notes for abilities such as keybinds, and change the ">" to a "+" if needed
+- Update the filter and dropdown to be one single control, to improve user experience.
 - With the help of the [PVME Discord](https://discord.gg/pvme) I indent to populate some default rotations for popular bosses/loadouts and have them available in the app.
   
 ## Long term goals:
