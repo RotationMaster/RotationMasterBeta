@@ -33,6 +33,32 @@ html, body {
   overflow: auto; /* Enable scrolling if content overflows */
 }
 
+.modal-content {
+  position: fixed; /* Use fixed to center it relative to the viewport */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the container */
+  width: 80%; /* Take up 80% of the viewport width */
+  max-height: 80%; /* Limit the height to 80% of the viewport */
+  background: black;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.rotation-textbox {
+  width: 80%;
+  min-height : 100px;
+  height: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #1c2c34;
+  color: whitesmoke;
+}
+
 #patch-notes-content {
   max-height: calc(100% - 50px); /* Ensure content fits within the container */
   overflow-y: auto; /* Add vertical scrolling for content */

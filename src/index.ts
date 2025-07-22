@@ -3,6 +3,8 @@ import abilities from './asset/abilities.json';
 import * as A1 from '@alt1/base';
 import * as sauce from './a1sauce';
 import * as htmlToImage from 'html-to-image';
+import { RotationSet, Rotation, Dropdown, Ability } from './models';
+import { convertDropdownsToString, convertStringToDropdowns } from './emojiLookup';
 
 var currentOverlayPosition = sauce.getSetting('overlayPosition');
 let updatingOverlayPosition = false;
@@ -57,29 +59,6 @@ function getById(id: string): HTMLElement | null {
 // Define variables
 let rotationName = '';
 let selectedIndex = 0
-
-type RotationSet = {
-  name: string; // Name of the rotation set
-  data: Rotation[]; // Array of Rotation objects
-};
-type Rotation = {
-  id: number
-  name: string;
-  data: Dropdown[];
-};
-type Dropdown = {
-  seperator: string | '→';
-  selectedAbility: Ability | null; // The currently selected ability, or null if none is selected
-  notes: string | null;
-};
-type Ability = {
-
-  Title: string;
-  Emoji: string;       // The emoji representing the ability
-  EmojiId: string;     // A unique identifier for the ability
-  Category: string;    // The category of the ability
-  Src: string;         // The source URL for the ability's image
-};
 
 // Retrieve saved rotations from localStorage
 const cachedRotations = localStorage.getItem("savedRotations");
@@ -220,6 +199,17 @@ const renderRotationContainers = () => {
       }
     };
 
+    const stringEditButton = document.createElement('button');
+    stringEditButton.classList.add('nisbutton');
+    stringEditButton.innerHTML = '<i class="fa-solid fa-code"></i>';
+    stringEditButton.onclick = () => {
+      showRotationEditModal(rotation, (output: Rotation) => {
+        rotation = output; // Update the local reference
+        rotationSet.data[index] = output; // Update the RotationSet
+        renderRotationContainers();
+      });
+    }
+
     // Append buttons to the rotation div
     const controlDiv = document.createElement('div');
     controlDiv.className = 'rotation-controls';
@@ -227,6 +217,7 @@ const renderRotationContainers = () => {
     controlDiv.appendChild(moveUpButton);
     controlDiv.appendChild(moveDownButton);
     controlDiv.appendChild(deleteButton);
+    controlDiv.appendChild(stringEditButton);
 
     rotationDiv.appendChild(controlDiv);
     // Append the rotation div to the container
@@ -236,6 +227,69 @@ const renderRotationContainers = () => {
     renderRotationPreview(rotation.id);
   });
 };
+
+function showRotationEditModal(rotation: Rotation, onSave: (output: Rotation) => void) {
+  // Create overlay to freeze the app
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-freeze-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.background = 'rgba(0,0,0,0.5)';
+  overlay.style.zIndex = '1000';
+  overlay.style.pointerEvents = 'all';
+  overlay.style.display = 'flex';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+
+  // Modal content
+  const modalContent = document.createElement('div');
+  modalContent.className = 'modal-content';
+
+  // RotationName
+  const name = document.createElement('h3');
+  name.className = 'nisheader'
+  name.textContent = `Edit Rotation: ${rotation.name}`;
+  modalContent.appendChild(name);
+
+
+  // Textbox
+  const textbox = document.createElement('textarea');
+  textbox.value = convertDropdownsToString(rotation.data);
+  textbox.className = 'rotation-textbox';
+  modalContent.appendChild(textbox);
+
+  const buttonDiv = document.createElement('div');
+  buttonDiv.className = 'rotation-controls'
+
+  // Save button
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Save';
+  saveBtn.className = 'nisbutton'
+  saveBtn.onclick = () => {
+    const outputRotation = convertStringToDropdowns(textbox.value);
+    rotation.data = outputRotation;
+    onSave(rotation);
+    document.body.removeChild(overlay);
+  };
+  buttonDiv.appendChild(saveBtn);
+
+  // Cancel button
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.className = 'nisbutton';
+  cancelBtn.onclick = () => {
+    document.body.removeChild(overlay);
+  };
+  buttonDiv.appendChild(cancelBtn);
+
+  modalContent.append(buttonDiv);
+
+  overlay.appendChild(modalContent);
+  document.body.appendChild(overlay);
+}
 
 const hideAllButIndex = (id: Number) => {
   renderRotationContainers();
@@ -346,7 +400,8 @@ const renderDropdowns = (rotationIndex: number) => {
         const filteredAbilities = abilities.filter(
           (a: any) =>
             a.Category.toLowerCase().includes(filter) ||
-            a.Emoji.toLowerCase().includes(filter)
+            a.Emoji.toLowerCase().includes(filter) ||
+            a.Title.toLowerCase().includes(filter)
         );
         updateDropdownOptions(selectElement, filteredAbilities);
       }, 300)
@@ -1070,7 +1125,7 @@ function updateLocation(e : any) {
   );
 }
 
-const currentVersion = '2.3.1';
+const currentVersion = '2.4.0';
 const settingsObject = {
   settingsHeader: sauce.createHeading(
     'h2',
