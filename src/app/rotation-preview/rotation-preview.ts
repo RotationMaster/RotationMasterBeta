@@ -4,8 +4,7 @@ import { Ability, AbilitySelection } from '../../models';
 @Component({
     selector: 'rm-rotation-preview',
     templateUrl: './rotation-preview.html',
-    styleUrls: ['./rotation-preview.scss'],
-    standalone: false
+    styleUrls: ['./rotation-preview.scss']
 })
 export class RotationPreview {
   @Input() AbilitySelections: AbilitySelection[] = [];
