@@ -4,7 +4,7 @@ import { PatchNotes } from "./patch-notes/patch-notes";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, PatchNotes],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

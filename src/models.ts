@@ -16,7 +16,7 @@ export class Patch implements IPatch {
     }
 }
 
-export class Setting {
+export class SettingConfig {
     name: string;
     type: SettingTypeEnum;
     value?: string | boolean | number | { x: number, y: number };
@@ -32,7 +32,7 @@ export class Setting {
     }
 }
 
-export class RangeSetting extends Setting {
+export class RangeSettingConfig extends SettingConfig {
     minValue: number;
     maxValue: number;
     unit?: string;
