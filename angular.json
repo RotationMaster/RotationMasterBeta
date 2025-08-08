@@ -18,12 +18,36 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "define": {
+              "global": "globalThis",
+              "require.resolve": "undefined"
+            },
+            "externalDependencies": [
+              "sharp",
+              "detect-libc"
+            ],
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
+              },
+              {
+                "glob": "appconfig.json",
+                "input": "src",
+                "output": "."
+              },
+              {
+                "glob": "**/*.js",
+                "input": "src/stubs",
+                "output": "."
               }
             ],
             "styles": [
@@ -35,8 +59,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",

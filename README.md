@@ -1,59 +1,51 @@
-# RotationMaster
+# Rotation Master
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.1.4.
+#### current version: v2.4.0
 
-## Development server
+link: https://ellamental2.github.io/RotationMaster/
 
-To start a local development server, run:
+install on alt1: alt1://addapp/https://ellamental2.github.io/RotationMaster/appconfig.json
 
-```bash
-ng serve
-```
+join our discord: https://discord.gg/3N6F3rppTC
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+##### Beta Version: v3.0.0
 
-## Code scaffolding
+The beta version is unstable so may contain bugs, however if you would like to try the newest changes you can do so here:
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+link: https://rotationmaster.github.io/RotationMasterBeta/
 
-```bash
-ng generate component component-name
-```
+install on alt1: alt1://addapp/https://rotationmaster.github.io/RotationMasterBeta/
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+<hr/>
 
-```bash
-ng generate --help
-```
+# What does it do?
 
-## Building
+The basic inspiration for Rotation Master is to easilly be able to display a "cheat sheet" of your rotation over your runescape screen, instead of having to look at another screen.
+You can set up your rotation in the window when it opens by adding new abilities and selecting from the dropdowns.
 
-To build the project run:
+This idea expanded so you can now share rotations via a json file and the export/import buttons.
 
-```bash
-ng build
-```
+<img width="1068" height="967" alt="image" src="https://github.com/user-attachments/assets/4dfc1852-9253-4c27-aa31-c89ece7a1be6" />
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Then when you are happy you can position the overlay as you wish with the set ovelay position button and minimise the window.
 
-## Running unit tests
+<img width="706" height="152" alt="image" src="https://github.com/user-attachments/assets/f0505191-a147-48f9-a8e4-d7c1c29eb091" />
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
 
-```bash
-ng test
-```
+You can cycle between rotations by pressing the main alt1 keybind (default alt + 1)
 
-## Running end-to-end tests
+## Future Aims for the project:
+- ~~Update the filter and dropdown to be one single control, to improve user experience.~~
+  
+## Long term goals:
+- If this project proves popular enough I will look at updating it to have dynamic cheat sheets so that once you activate an ability it fades slightly from the cheatsheet and highlights the next ability slightly.
 
-For end-to-end (e2e) testing, run:
+<hr/>
 
-```bash
-ng e2e
-```
+## Special thanks to:
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+[RS3 Vikings](Discord.gg/rs3vikings) for being a great clan who are willing to be guinea pigs/testers
 
-## Additional Resources
+and
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+[PVME Discord](https://discord.gg/pvme) for allowing me to use their images and helping with rotations.

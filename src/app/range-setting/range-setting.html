@@ -1,14 +1,21 @@
-<div class="flex setting" id="container">
-    <label class="full" [for]="setting.name">{{ setting.description }}</label>
-    <input type="range"
-        [id]="setting.name"
-        [min]="setting.minValue" 
-        [max]="setting.maxValue"
-        [value]="setting.value" 
-        (change)="valueChanged($event)"
-        (input)="valueChanged($event)" />
-    <output
-        id="{{setting.name}}Output"
-        [for]="setting.name"
-    >{{setting.value}}{{setting.unit}}</output>
+<div class="flex setting center-aligned" id="container">
+    <h3>{{ setting.label }}</h3>
+    <div>
+        <label class="full" [for]="setting.name">{{ setting.description }}</label>
+        <input type="range"
+            class="slider"
+            [id]="setting.name"
+            [min]="setting.minValue" 
+            [max]="setting.maxValue"
+            [value]="setting.value" 
+            (change)="valueChanged($event)"
+            (input)="valueChanged($event)"
+        />
+        <output
+            id="{{setting.name}}Output"
+            [for]="setting.name"
+        >
+            {{setting.value}}{{setting.unit}}
+        </output>
+    </div>
 </div>

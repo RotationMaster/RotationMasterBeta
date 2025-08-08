@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PatchNotes } from './patch-notes';
+import { PatchNotesComponent } from './patch-notes';
 
 describe('PatchNotes', () => {
-  let component: PatchNotes;
-  let fixture: ComponentFixture<PatchNotes>;
+  let component: PatchNotesComponent;
+  let fixture: ComponentFixture<PatchNotesComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PatchNotes]
+      imports: [PatchNotesComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(PatchNotes);
+    fixture = TestBed.createComponent(PatchNotesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -7,7 +7,7 @@ import { IPatch } from '../../models';
   templateUrl: './patch-notes.html',
   styleUrl: './patch-notes.scss'
 })
-export class PatchNotes {
+export class PatchNotesComponent {
   @Input() patchNotes: IPatch[] = [];
   @Input() visible = false;
   @Output() close = new EventEmitter<void>();

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RotationSet } from './rotation-set';
+import { RotationSetComponent } from './rotation-set';
 
 describe('RotationSet', () => {
-  let component: RotationSet;
-  let fixture: ComponentFixture<RotationSet>;
+  let component: RotationSetComponent;
+  let fixture: ComponentFixture<RotationSetComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RotationSet]
+      imports: [RotationSetComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(RotationSet);
+    fixture = TestBed.createComponent(RotationSetComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

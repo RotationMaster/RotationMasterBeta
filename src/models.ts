@@ -33,12 +33,14 @@ export class SettingConfig {
 }
 
 export class RangeSettingConfig extends SettingConfig {
+    label: string;
     minValue: number;
     maxValue: number;
     unit?: string;
 
-    constructor(name: string,  minValue: number, maxValue: number, value?: number, unit?:string, description?: string, classes?: string[]) {
+    constructor(name: string, label: string, minValue: number, maxValue: number, value?: number, unit?:string, description?: string, classes?: string[]) {
         super(name, SettingTypeEnum.Range, value, description, classes);
+        this.label = label;
         this.minValue = minValue;
         this.maxValue = maxValue;
         this.unit = unit;

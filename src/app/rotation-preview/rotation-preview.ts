@@ -63,18 +63,6 @@ export class RotationPreview {
   showPreview(): boolean {
     const hasAbilities = Array.isArray(this.AbilitySelections) && this.AbilitySelections.some(sel => !!sel.SelectedAbility);
     
-    // Debug logging
-    if (hasAbilities) {
-      console.log('Preview data:', {
-        selectionsCount: this.AbilitySelections.length,
-        abilitiesWithImages: this.AbilitySelections.filter(sel => sel.SelectedAbility).map(sel => ({
-          title: sel.SelectedAbility?.Title,
-          src: sel.SelectedAbility?.Src
-        })),
-        rows: this.calculateAbilityRows()
-      });
-    }
-    
     return hasAbilities;
   }
 
@@ -100,6 +88,6 @@ export class RotationPreview {
   }
 
   onImageLoad(event: Event, ability: Ability): void {
-    console.log('Image loaded successfully:', ability.Title, ability.Src);
+    //console.log('Image loaded successfully:', ability.Title, ability.Src);
   }
 }
