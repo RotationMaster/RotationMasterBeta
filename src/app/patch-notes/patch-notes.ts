@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { IPatch } from '../../models';
 
 @Component({
   selector: 'rm-patch-notes',
@@ -7,5 +8,7 @@ import { Component } from '@angular/core';
   styleUrl: './patch-notes.scss'
 })
 export class PatchNotes {
-
+  @Input() patchNotes: IPatch[] = [];
+  @Input() visible = false;
+  @Output() close = new EventEmitter<void>();
 }

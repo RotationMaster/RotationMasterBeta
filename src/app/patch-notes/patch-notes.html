@@ -1,1 +1,22 @@
-<p>patch-notes works!</p>
+@if (visible) {
+    <div id="patch-notes-container">
+        <h2>Patch Notes</h2>
+        <div id="patch-notes-content">
+            <ul>
+                @for (patch of patchNotes; track patch.version) {
+                    <li class="version-patch">
+                        <h2>Version: {{ patch.version }}</h2>
+                        <p>{{ patch.description }}</p>
+                        <ul>
+                        @for (change of patch.changes; track $index) {
+                            <li>{{ change }}</li>
+                        }
+                        </ul>
+                        <hr style="margin: 20px 0; border: 1px solid #ccc" />
+                    </li>
+                }
+            </ul>
+            <button id="close-patch-notes" class="nisbutton" (click)="close.emit()">Close</button>
+        </div>
+    </div>
+}
