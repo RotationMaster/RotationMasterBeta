@@ -8,7 +8,7 @@ install on alt1: alt1://addapp/https://ellamental2.github.io/RotationMaster/appc
 
 join our discord: https://discord.gg/3N6F3rppTC
 
-##### Beta Version: v3.0.1
+##### Beta Version: v3.0.2
 
 The beta version is unstable so may contain bugs, however if you would like to try the newest changes you can do so here:
 

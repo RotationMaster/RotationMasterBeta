@@ -2,12 +2,13 @@ import { Component, EventEmitter, Input, Output, ViewChild, ChangeDetectionStrat
 import { Ability, AbilitySelection } from '../../models';
 import { SearchDropdown } from '../search-dropdown/search-dropdown';
 import { FormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common';
 
 @Component({
     selector: 'rm-ability-selector',
     templateUrl: './ability-selector.html',
     styleUrls: ['./ability-selector.scss'],
-    imports: [SearchDropdown, FormsModule],
+    imports: [SearchDropdown, FormsModule, NgIf],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AbilitySelector {
@@ -18,7 +19,9 @@ export class AbilitySelector {
 
   @Output() abilitySelectionChange = new EventEmitter<AbilitySelection>();
   @Output() delete = new EventEmitter();
-  @Output() copy = new EventEmitter();
+  @Output() copy = new EventEmitter<string>(); // Updated to emit a string parameter for copy type
+
+  copyMenuVisible = false;
 
   separators: string[] = ['→', '+', '/', 's', 'r', 'tc',
                           '↵ →', '↵ +', '↵ /', '↵ s', '↵ r', '↵ tc',

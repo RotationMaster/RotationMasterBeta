@@ -86,7 +86,7 @@ export class RotationContainerComponent implements OnDestroy {
     this.loading.emit(false);
   }
 
-  onCopyAbilitySelection(index: number) {
+  onCopyAbilitySelection(index: number, position: string = 'end') {
     // Create a deep copy of the ability selection
     const original = this.rotation.Data[index];
     const copy = new AbilitySelection(
@@ -95,8 +95,23 @@ export class RotationContainerComponent implements OnDestroy {
       original.Notes
     );
     
-    // Insert the copy right after the original
-    this.rotation.Data.splice(index + 1, 0, copy);
+    // Handle different copy positions based on the parameter
+    switch (position) {
+      case 'before':
+        // Insert at the current position (pushing original down)
+        this.rotation.Data.splice(index, 0, copy);
+        break;
+      case 'after':
+        // Insert after the current position (original behavior)
+        this.rotation.Data.splice(index + 1, 0, copy);
+        break;
+      case 'end':
+      default:
+        // Add to the end of the list (default behavior)
+        this.rotation.Data.push(copy);
+        break;
+    }
+    
     this.onRotationChange();
   }
 

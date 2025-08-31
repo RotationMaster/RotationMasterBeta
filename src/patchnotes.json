@@ -132,6 +132,14 @@
           "Added an alt1 version check to prompt user to update alt1 if needed.",
           "Fixed a bug where the bottom of the rotation is getting cut off when there is lots of abilities in the rotation."
         ]
+    },
+    {
+        "version": "3.0.2",
+        "description": "Copy Button Changes",
+        "changes": [
+          "Changed the default behaviour of the Copy Ability button to put the copied ability at the end of the rotation.",
+          "Added a context menu to the copy button with options to 'Copy Here' or 'Copy to End'."
+        ]
     }
 
   ]

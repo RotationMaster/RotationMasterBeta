@@ -39,10 +39,52 @@
     filter: saturate(0.3);
 }
 
+.button-dropdown {
+  position: relative;
+  display: inline-block;
+  margin-right: 5px;
+}
+
 .nisbutton.copy-button {
-    margin-right: 5px;
+    margin-right: 0;
 }
 
 .nisbutton.copy-button:disabled {
     filter: saturate(0.3);
+}
+
+.copy-context-menu {
+  position: absolute;
+  z-index: 1000;
+  background: #1D190D;
+  border: 1px solid #584F2C;
+  border-radius: 4px;
+  min-width: 150px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  top: 100%;
+  right: 0;
+  margin-top: 0px;
+  overflow: hidden;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #E8D8B3;
+  cursor: pointer;
+  font-size: 0.9rem;
+  
+  &:hover {
+    background: #584F2C;
+  }
+  
+  i {
+    margin-right: 8px;
+    width: 14px;
+    text-align: center;
+  }
 }

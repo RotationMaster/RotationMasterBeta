@@ -34,14 +34,27 @@
     (ngModelChange)="onNotesChange($event)"
     />
 
-  <button
-    class="nisbutton copy-button"
-    (click)="copy.emit()"
-    title="Copy Ability"
-    [disabled]="!abilitySelection.SelectedAbility"
-    >
-    <i class="fa-solid fa-copy"></i>
-  </button>
+  <div class="button-dropdown">
+    <button
+      class="nisbutton copy-button"
+      (click)="copy.emit('end')"
+      (contextmenu)="$event.preventDefault(); copyMenuVisible = !copyMenuVisible"
+      title="Copy Ability (Right-click for more options)"
+      [disabled]="!abilitySelection.SelectedAbility"
+      >
+      <i class="fa-solid fa-copy"></i>
+    </button>
+    
+    <!-- Context Menu -->
+    <div class="copy-context-menu" *ngIf="copyMenuVisible" (mouseleave)="copyMenuVisible = false">
+      <button class="context-menu-item" (click)="copy.emit('after'); copyMenuVisible = false">
+        <i class="fa-solid fa-arrow-right"></i> Copy Here
+      </button>
+      <button class="context-menu-item" (click)="copy.emit('end'); copyMenuVisible = false">
+        <i class="fa-solid fa-arrow-down"></i> Copy to End
+      </button>
+    </div>
+  </div>
 
   <button
     class="nisbutton delete-button"

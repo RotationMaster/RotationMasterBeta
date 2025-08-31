@@ -20,7 +20,7 @@ export class App implements AfterViewInit {
   }
 
   protected readonly title = signal('RotationMaster');
-  protected readonly version = signal('3.0.1');
+  protected readonly version = signal('3.0.2');
   protected readonly appName = signal('rotationMaster');
 
   patchNotes: IPatch[] = [];

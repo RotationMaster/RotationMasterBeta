@@ -62,7 +62,7 @@
               [isOnly]="rotation.Data.length === 1"
               (abilitySelectionChange)="onAbilitySelectionChange($event, i)"
               (delete)="onDeleteAbilitySelection(i)"
-              (copy)="onCopyAbilitySelection(i)"
+              (copy)="onCopyAbilitySelection(i, $event)"
             ></rm-ability-selector>
           </div>
         }
