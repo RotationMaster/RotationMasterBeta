@@ -123,6 +123,15 @@
           "Added a label overlay feature that displays the rotation name on the overlay when first switching to the rotation.",
           "Updated UI buttons to make more use of symbols and icons for a cleaner look."
         ]
+    },
+    {
+        "version": "3.0.1",
+        "description": "Bug Fixing!",
+        "changes": [
+          "Updated the message when the app is opened in a non-alt1 browser.",
+          "Added an alt1 version check to prompt user to update alt1 if needed.",
+          "Fixed a bug where the bottom of the rotation is getting cut off when there is lots of abilities in the rotation."
+        ]
     }
 
   ]
