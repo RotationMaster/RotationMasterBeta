@@ -20,7 +20,7 @@ export class App implements AfterViewInit {
   }
 
   protected readonly title = signal('RotationMaster');
-  protected readonly version = signal('3.0.1');
+  protected readonly version = signal('3.0.0');
   protected readonly appName = signal('rotationMaster');
 
   patchNotes: IPatch[] = [];
@@ -57,19 +57,10 @@ export class App implements AfterViewInit {
       a1lib.identifyApp('./appconfig.json');
       // Use Alt1 global API if available
       a1lib.on('alt1pressed', (ev: any) => this.alt1pressed(ev));
-
-      // Check the alt1 version is > 1.6.0
-      if(!a1lib.hasAlt1Version('1.6.0')) {
-        this.Output?.insertAdjacentHTML(
-          'beforeend',
-          `<div>Alt1 version is too old. Please update to the latest version.</div>`
-        );
-      }
-
     } else {
       this.Output?.insertAdjacentHTML(
         'beforeend',
-        `<div>Alt1 not detected, You need to run this page in alt1 to show the overlay.</div>`
+        `<div>Alt1 not detected, You need to run this page in alt1 to capture the screen.</div>`
       );
       return;
     }
@@ -438,54 +429,10 @@ export class App implements AfterViewInit {
           Math.min(totalTrackedItems * 40 + totalHorizontalPadding, 800), // Estimate based on content + padding
           50 // Absolute minimum
         );
-        
-        // Significantly improve height calculation to ensure all images are visible
-        // Get actual row count based on the layout in rotation-preview component
-        const rowCount = Math.ceil(totalTrackedItems / abilitiesPerRow);
-        
-        // Get the actual rows from the DOM if possible for more accurate measurement
-        const rowElements = overlay.querySelectorAll('.rotation-preview-row');
-        
-        // Determine the scaled row height based on UI scale
-        // At lower UI scales, we need relatively more pixels per row
-        const baseRowHeight = 60; // Increased base height per row
-        const scaleFactor = Math.max(2.0, 100 / Math.max(uiScale, 10)); // Inverse scale factor, with minimum
-        const scaledRowHeight = baseRowHeight * scaleFactor;
-        
-        let totalRowHeight = 0;
-        
-        // Calculate total height by measuring actual row elements if available
-        if (rowElements && rowElements.length > 0) {
-          // Count the total number of ability images to handle more complex layouts
-          let totalImages = 0;
-          for (let i = 0; i < rowElements.length; i++) {
-            const rowElement = rowElements[i] as HTMLElement;
-            const imagesInRow = rowElement.querySelectorAll('.ability-image').length;
-            totalImages += imagesInRow;
-            
-            // Get the measured height or use our scaled calculation
-            const measuredHeight = Math.max(rowElement.offsetHeight, rowElement.scrollHeight);
-            totalRowHeight += measuredHeight > 0 ? measuredHeight : scaledRowHeight;
-          }
-          
-          // Add extra buffer for each row and scale it properly
-          totalRowHeight += rowElements.length * 20 * scaleFactor;
-          
-          // Apply additional scaling for large numbers of images
-          if (totalImages > 50) {
-            totalRowHeight *= 1.2; // Add 20% more height for very large rotations
-          }
-        } else {
-          // Fallback calculation with generous spacing
-          totalRowHeight = rowCount * scaledRowHeight;
-        }
-        
-        // Ensure we never go below the measured height, apply UI scaling and add extra bottom padding
-        // The scaling divisor compensates for the pixelRatio in the toCanvas function
         const calculatedHeight = Math.max(
-          height * 1.2, // Use actual content height with 20% buffer
-          totalRowHeight + totalVerticalPadding + (100 * scaleFactor), // Add extra scaled padding at bottom
-          100 // Increased absolute minimum
+          height, // Use actual content height
+          Math.floor((totalTrackedItems / abilitiesPerRow) + 1) * 27 * (uiScale / 100) + totalVerticalPadding,
+          50 // Absolute minimum
         );
 
         const dataUrl = await toCanvas(overlay, {
@@ -494,7 +441,7 @@ export class App implements AfterViewInit {
           width: minWidth,
           height: calculatedHeight,
           quality: 1,
-          pixelRatio: Math.max(0.5, uiScale / 100), // Ensure minimum pixelRatio of 0.5 to prevent scaling issues
+          pixelRatio: uiScale / 100 - 0.00999999999999999999,
           skipAutoScale: true,
           style: {
             // Ensure the element is fully visible during capture
