@@ -1,0 +1,16 @@
+<div class="flex setting center-aligned" id="bool-container">
+    <h3>{{ setting.label }}</h3>
+    <div class="toggle-container">
+        <label class="full" [for]="setting.name">{{ setting.description }}</label>
+        <label class="switch">
+            <input 
+                type="checkbox"
+                [id]="setting.name"
+                [checked]="setting.value"
+                (change)="valueChanged($event)"
+            />
+            <span class="slider round"></span>
+        </label>
+        <span class="toggle-value">{{ setting.value ? 'On' : 'Off' }}</span>
+    </div>
+</div>

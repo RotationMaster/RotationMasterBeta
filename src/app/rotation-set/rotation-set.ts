@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy, input } from '@angular/core';
 import { Ability, AbilitySelection, Rotation, RotationSet } from '../../models';
 import {CdkDragDrop, CdkDropList, CdkDrag, moveItemInArray} from '@angular/cdk/drag-drop';
 import abilities from '../../assets/abilities.json'; // Assuming you have an abilities.json file in assets
@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 export class RotationSetComponent implements OnDestroy {
   @Input() abilitiesPerRow: number = 10;
   @Input() selectedRotationIndex: number = 0;
+  @Input() previewOnly: boolean = false;
 
   @Output() changeSelectedRotation = new EventEmitter<number>();
   @Output() rotationSetChange = new EventEmitter<RotationSet>();
@@ -108,7 +109,8 @@ export class RotationSetComponent implements OnDestroy {
     return new Rotation(
       obj.Id,
       obj.Name,
-      obj.Data?.map((obj: any) => this.reviveAbilitySelection(obj))
+      obj.Data?.map((obj: any) => this.reviveAbilitySelection(obj)),
+      obj.Wave
     );
   }
 
@@ -135,6 +137,7 @@ export class RotationSetComponent implements OnDestroy {
   onSetSelectionChange(event: any): void {
     const selectedName = (event.target as HTMLSelectElement).value;
     this.setLoadingState(true);
+    this.loadSavedRotationSets()
     this.loadRotationSet(selectedName);
     this.setLoadingState(false);
   }
@@ -163,6 +166,10 @@ export class RotationSetComponent implements OnDestroy {
       
       this.rotationSetChange.emit(this.rotationSet);
     }
+  }
+
+  get hasWaveRotations(): boolean {
+    return this.rotationSet?.Data?.some(rotation => rotation.Wave) ?? false;
   }
 
   addRotation(): void {
@@ -265,7 +272,7 @@ export class RotationSetComponent implements OnDestroy {
   }
 
   trackByRotationId(index: number, rotation: Rotation): number {
-    return rotation.Id;
+    return rotation.Id || index;
   }
 
   exportRotationSet(): void {
@@ -425,7 +432,8 @@ export class RotationSetComponent implements OnDestroy {
       return {
         Id: rotation.id || rotation.Id || 0,
         Name: rotation.name || rotation.Name || this.defaultRotationName,
-        Data: normalizedSelections
+        Data: normalizedSelections,
+        Wave: rotation.wave || rotation.Wave || null
       };
     };
 

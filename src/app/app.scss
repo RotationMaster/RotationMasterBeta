@@ -84,3 +84,60 @@
     width: 100%; // Ensure it stretches within the parent
     height: 100%; // Ensure it stretches within the parent
 }
+
+// Preview-only mode styles
+.preview-only-mode {
+    rm-rotation-set {
+        .rotation-controls, 
+        .rotation-tabs,
+        .add-rotation-button,
+        .rename-container,
+        .delete-rotation-button {
+            display: none !important;
+        }
+        
+        .rotation-preview-container {
+            display: block !important;
+        }
+    }
+    
+    hr, .footer, #showPatchNotesButton, rm-settings {
+        display: none !important;
+    }
+    
+    .mainHeader {
+        margin-bottom: 10px;
+    }
+    
+    // Make the window smaller by adjusting padding
+    #RotationMaster {
+        padding: 0.5rem;
+    }
+    
+    .nismainborder {
+        width: auto;
+        height: auto;
+        min-width: 300px;
+    }
+}
+.exit-preview-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exit-preview-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}

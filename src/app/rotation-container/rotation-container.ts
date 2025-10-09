@@ -19,6 +19,7 @@ export class RotationContainerComponent implements OnDestroy {
   @Input() abilities: Ability[] = [];
   @Input() isSelected: boolean = false;
   @Input() rotationIndex: number = 0;
+  @Input() previewOnly: boolean = false;
   
   @Input() showDetails: boolean = true;
   @Input() abilitiesPerRow: number = 10;

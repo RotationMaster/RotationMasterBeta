@@ -1,0 +1,99 @@
+.flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.center-aligned {
+    align-items: center;
+}
+
+h3 {
+    color: #ffcb05;
+    text-shadow: 1px 1px #000000;
+}
+
+label,
+output {
+    font-family: sans-serif;
+    font-size: 14px;
+    color: #94afbd;
+    text-shadow: 1px 1px #000000;
+}
+
+.setting {
+    .toggle-container {
+        display: flex;
+        flex-direction: row; // Changed from column to row
+        align-items: center; // Center items vertically
+        gap: 10px; // Add space between elements
+        flex: 1;
+        
+        label.full {
+            flex: 1; // Take up remaining space
+            margin-bottom: 0; // Remove bottom margin
+        }
+        
+        .toggle-value {
+            margin-top: 0; // Remove top margin
+            font-weight: bold;
+            min-width: 30px; // Ensure consistent width for "On"/"Off"
+        }
+    }
+}
+
+// Toggle Switch Styling
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    
+    input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        
+        &:checked + .slider {
+            background-color: #ffcb05; // Golden color when active
+        }
+        
+        &:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        &:focus + .slider {
+            box-shadow: 0 0 1px #ffcb05;
+        }
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #4e443c; // Darker background when off
+        transition: .4s;
+        
+        &:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        
+        &.round {
+            border-radius: 34px;
+            
+            &:before {
+                border-radius: 50%;
+            }
+        }
+    }
+}

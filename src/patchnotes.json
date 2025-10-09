@@ -140,6 +140,14 @@
           "Changed the default behaviour of the Copy Ability button to put the copied ability at the end of the rotation.",
           "Added a context menu to the copy button with options to 'Copy Here' or 'Copy to End'."
         ]
+    },
+    {
+      "version": "3.0.3",
+      "description": "EXPERIMENTAL - Automatic Phase/Wave Switching",
+      "changes": [
+        "Added a new setting in the rotation section where you can specify a phase/wave for each rotation. The app will then automatically switch to the correct rotation when it detects a phase/wave change in the game.",
+        "This feature is experimental and may not work perfectly in all situations. Please report any issues on the discord server."
+      ]
     }
 
   ]

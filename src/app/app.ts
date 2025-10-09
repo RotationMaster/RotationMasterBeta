@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, DOCUMENT, Inject, signal } from '@angular/core';
-import { IPatch, Patch, RangeSettingConfig, RotationSet } from '../models';
+import { BoolSettingConfig, IPatch, Patch, Position, RangeSettingConfig, RotationSet, SettingConfig, SettingTypeEnum } from '../models';
 import { blankSettings } from '../assets/blankSettings';
 import patchnotes from '../patchnotes.json';
 import { PatchNotesComponent } from './patch-notes/patch-notes';
@@ -7,6 +7,9 @@ import { RotationSetComponent } from './rotation-set/rotation-set';
 import { Settings } from './settings/settings';
 import { toCanvas } from 'html-to-image';
 import * as a1lib from 'alt1';
+import * as a1base from 'alt1/base';
+import * as ocr from 'alt1/ocr';
+import Tesseract from 'tesseract.js';
 
 @Component({
   selector: 'app-root',
@@ -16,11 +19,14 @@ import * as a1lib from 'alt1';
 })
 export class App implements AfterViewInit {
   
+
+  imgs: any = {};
+
   constructor(@Inject(DOCUMENT) private document: Document) {
   }
 
   protected readonly title = signal('RotationMaster');
-  protected readonly version = signal('3.0.2');
+  protected readonly version = signal('3.0.3');
   protected readonly appName = signal('rotationMaster');
 
   patchNotes: IPatch[] = [];
@@ -29,23 +35,23 @@ export class App implements AfterViewInit {
   selectedIndex: number = 0;
   updatingOverlayPosition = false;
   overlayInitialized: boolean = false;
-
+  
+  // Settings related properties
+  settings: SettingConfig[] = [];
+  elementCache: Record<string, HTMLElement | null> = {};
   Output: HTMLElement | null = null;
-
-  settings: any[] = [];
-  rangeSettings(): RangeSettingConfig[] {
-    return this.settings.filter(s => s instanceof RangeSettingConfig);
-  }
-
+  
+  // Settings signals
+  protected readonly rangeSettings = signal<RangeSettingConfig[]>([]);
+  protected readonly boolSettings = signal<BoolSettingConfig[]>([]);
+  
   //get a specific setting value
   getSettingValue(name: string): any {
     const setting = this.settings.find(s => s.name === name);
     return setting ? setting.value : null;
   }
 
-  elementCache: Record<string, HTMLElement | null> = {};
-
-  ngOnInit() {
+  async ngOnInit() {
 
     this.Output = this.getById('output');
 
@@ -81,6 +87,18 @@ export class App implements AfterViewInit {
       );
       return;
     }
+
+    const waveImg = this.loadImage('assets/wave.data.png');
+    const kilnWaveImg = this.loadImage('assets/kiln_wave.data.png');
+    const phaseImg = this.loadImage('assets/phase.data.png');
+    const healthImg = this.loadImage('assets/boss_health.data.png');
+
+    this.imgs = a1lib.ImageDetect.webpackImages({
+      "wave": waveImg,
+      "kiln_wave": kilnWaveImg,
+      "phase": phaseImg,
+      "health": healthImg
+    });
   }
   
   ngAfterViewInit() {
@@ -94,7 +112,17 @@ export class App implements AfterViewInit {
     const settingName = event.name as string;
     const settingValue = event.value;
 
-    this.settings.find(setting => setting.name === settingName)!.value = settingValue;
+    const settingToUpdate = this.settings.find(setting => setting.name === settingName);
+    if (settingToUpdate) {
+      settingToUpdate.value = settingValue;
+      
+      // Update signals if needed
+      if (settingToUpdate.type === SettingTypeEnum.Range) {
+        this.rangeSettings.set(this.settings.filter(s => s.type === SettingTypeEnum.Range) as RangeSettingConfig[]);
+      } else if (settingToUpdate.type === SettingTypeEnum.Boolean) {
+        this.boolSettings.set(this.settings.filter(s => s.type === SettingTypeEnum.Boolean) as BoolSettingConfig[]);
+      }
+    }
 
     // update local storage
     const currentSettings = JSON.parse(localStorage.getItem(`${this.appName}_settings`) || '{}');
@@ -105,7 +133,7 @@ export class App implements AfterViewInit {
   async showPatchNotes(showAll: boolean) {
     const lastKnownVersion = showAll ? '0.0.1' : this.settings.find(s => s.name === 'lastKnownVersion')?.value || '0.0.1';
 
-    if (lastKnownVersion == this.version) {
+    if (lastKnownVersion == this.version()) {
       return;
     }
 
@@ -151,7 +179,8 @@ export class App implements AfterViewInit {
         abilitiesPerRow: 10,
         uiScale: 100,
         updatingOverlayPosition: false,
-        lastKnownVersion: '0.0.1'
+        lastKnownVersion: '0.0.1',
+        previewOnly: false
       }));
     }
     else {
@@ -160,6 +189,10 @@ export class App implements AfterViewInit {
         s.value = savedSettings[s.name] || s.value;
       });
     }
+    
+    // Initialize range and bool settings signals
+    this.rangeSettings.set(this.settings.filter(s => s.type === SettingTypeEnum.Range && !s.hidden) as RangeSettingConfig[]);
+    this.boolSettings.set(this.settings.filter(s => s.type === SettingTypeEnum.Boolean && !s.hidden) as BoolSettingConfig[]);
   }
 
   public getById(id: string): HTMLElement | null {
@@ -182,6 +215,10 @@ export class App implements AfterViewInit {
     } else {
       this.cycleRotationSet();
     }
+  }
+
+  exitPreviewMode(): void {
+    this.onUpdateSetting({ name: 'previewOnly', value: false });
   }
   
   cycleRotationSet() {
@@ -216,6 +253,114 @@ export class App implements AfterViewInit {
         this.initializeOverlay();
       }, 100);
     }
+  }
+
+  private findHealth(): Position | null {
+    let img = a1base.captureHoldFullRs();
+    var poslist = img.findSubimage(this.imgs['health']);
+
+    if (poslist.length > 0){
+      var posx = poslist[0].x;
+      var posy = poslist[0].y;
+      var posw = 389;
+      var posh = 27;
+
+      return new Position(
+        posx,
+        posy,
+        posw,
+        posh,
+        24,
+        12
+      )
+    };
+
+    console.log("No healthbar found");
+    return null;
+  }
+
+  private findWave(): Position | null {
+    let img = a1base.captureHoldFullRs();
+
+     // try phase
+    poslist = img.findSubimage(this.imgs['phase']);
+
+    if (poslist.length > 0){
+      return new Position(
+        poslist[0].x,
+        poslist[0].y,
+        90,
+        24,
+        24,
+        12
+      )
+    };
+
+    var poslist = img.findSubimage(this.imgs['wave']);
+    if (poslist.length > 0){
+      return new Position(
+        poslist[0].x - 10,
+        poslist[0].y - 24,
+        90,
+        24,
+        24,
+        12
+      );
+    }
+
+    // try kiln wave
+    poslist = img.findSubimage(this.imgs['kiln_wave']);
+
+    if(poslist.length > 0) {
+      return new Position(
+        poslist[0].x + 21,
+        poslist[0].y - 15,
+        74,
+        18,
+        21,
+        -15
+      );
+    }
+
+    console.log("No wave found");
+    return null;
+  }
+
+  private waveCountFont: ocr.FontDefinition | null = null;
+
+  private async readImageNum(pos: Position): Promise<number | null> {
+
+    let img = a1base.captureHold(pos.x, pos.y, pos.w, pos.h);
+
+    var str = alt1.bindReadColorString(img.handle, "chat", a1base.mixColor(255,255,255), pos.xos, pos.yos);
+
+    let imgData = img.toData(pos.x, pos.y, pos.w, pos.h);
+
+    const canvas = this.document.createElement('canvas');
+    canvas.width = imgData.width;
+    canvas.height = imgData.height;
+    const ctx = canvas.getContext('2d');
+
+    ctx?.putImageData(imgData, 0, 0);
+
+    const imgDataUrl = canvas.toDataURL();
+
+    if (str == null || str.length == 0) {
+      //if (!this.waveCountFont) { this.waveCountFont = await fetch("../assets/fonts/aa_10px-mono.fontmeta.json").then(res => res.json()); }
+      //str = ocr.findReadLine(imgData, this.waveCountFont!, [[227,204,207]], 0, 14, pos.w, 10).text;
+      await Tesseract.recognize(imgDataUrl,'eng').then(({ data: { text } }) => { str = text; });
+      if (str == null || str.length == 0) {
+        console.log("No wave text found");
+        return null;
+      }
+    }
+
+    var match = str.match(/(\d{1,3}(?:,\d{3})+|\d+)/g);
+    if (match) {
+      return +match[0].replace(',','');
+    }
+
+    return null;
   }
 
   async updateOverlayPosition(){
@@ -275,12 +420,44 @@ export class App implements AfterViewInit {
     return this.getById(previewId);
   }
   
+  private currentBossHealth: number | null = null;
+  private currentWave: number | null = null;
+
   startOverlay() {
     const refreshRate = this.getSettingValue('overlayRefreshRate') || 50;
     let overlayPosition;
 
     const updateOverlay = async () => {
-      const selectedRotation = this.selectedRotationSet.Data[this.selectedIndex ?? 0];
+      // try to get the current wave
+      let wavePos = this.findWave();
+      if (wavePos) {
+        let waveNum = await this.readImageNum(wavePos);
+        if (waveNum && this.currentWave !== waveNum) {
+          // we found a wave number, do something with it
+            this.currentWave = waveNum;
+            console.log("Current wave/phase: " + waveNum);
+        }
+      }
+
+      // TODO: Fix this, health reading is very unreliable
+      // let bossHealthPos = this.findHealth();
+      // if (bossHealthPos) {
+      //   let bossHealth = await this.readImageNum(bossHealthPos);
+      //   if (bossHealth && this.currentBossHealth !== bossHealth) {
+      //     // we found a wave number, do something with it
+      //       this.currentBossHealth = bossHealth;
+      //       console.log("Boss health: " + bossHealth);
+      //   }
+      // }
+
+      if (this.currentWave !== null &&
+        this.selectedRotationSet.Data.some(rs => rs.Wave == this.currentWave) &&
+        this.selectedRotationSet.Data[this.selectedIndex]?.Wave != this.currentWave) {
+          this.selectedIndex = this.selectedRotationSet.Data.findIndex(rs => rs.Wave == this.currentWave);
+          this.showRotationNameOverlay();
+      }
+
+      const selectedRotation = this.selectedRotationSet.Data[this.selectedIndex ?? 0] || this.selectedRotationSet;
       
       if (!selectedRotation) {
         console.error('No rotation is selected.');
@@ -610,4 +787,28 @@ export class App implements AfterViewInit {
     this.showRotationNameOverlay();
   }
 
+  getBossHealth(): number {
+    return 100;
+  }
+
+  async loadImage(src: string): Promise<ImageData> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        resolve(imageData);
+      };
+      img.onerror = reject;
+    });
+  }
 }

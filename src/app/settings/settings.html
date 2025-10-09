@@ -4,7 +4,10 @@
 
   <button class="nisbutton" (click)="setOverlayPosition.emit()">Set Overlay Position</button>
 
-  @for (setting of settings; track setting) {
+  
+
+  <!-- Range Settings -->
+  @for (setting of rangeSettings; track setting) {
     <div class="setting">
       <rm-range-setting
         [setting]="setting"
@@ -12,4 +15,14 @@
       ></rm-range-setting>
     </div>
   }
+  
+  <!-- Boolean Settings -->
+  <!-- @for (setting of boolSettings; track setting) {
+    <div class="setting">
+      <rm-bool-setting
+        [setting]="setting"
+        (onUpdate)="updateSetting.emit({ name: setting.name, value: $event })"
+      ></rm-bool-setting>
+    </div>
+  } -->
 </div>

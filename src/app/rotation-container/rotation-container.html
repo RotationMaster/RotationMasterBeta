@@ -1,38 +1,47 @@
 <div class="rotation-container center-aligned">
-  <div class="rotation-label">
-    <input
-      type="radio"
-      name="rotationSelector"
-      [value]="rotation.Id"
-      [checked]="isSelected"
-      (change)="onRotationSelected()"
-      />
-    <input
-      type="text"
-      class="nisinput rotation-name-input"
-      [(ngModel)]="rotation.Name"
-      placeholder="Rotation Name"
-      (input)="onRotationChange()"
-      />
-    @if (showDetails) {
-      <button
-        class="nisbutton"
-        (click)="showDetails = false"
-        title="Hide Rotation Details"
-        >
-        <i class="fa-solid fa-eye"></i>
-      </button>
-    }
-    @if (!showDetails) {
-      <button
-        class="nisbutton"
-        (click)="onShowDetails()"
-        title="Show Rotation Details"
-        >
-        <i class="fa-solid fa-eye-slash"></i>
-      </button>
-    }
-  </div>
+  @if(!previewOnly) {
+    <div class="rotation-label">
+      <input
+        type="radio"
+        name="rotationSelector"
+        [value]="rotation.Id"
+        [checked]="isSelected"
+        (change)="onRotationSelected()"
+        />
+      <input
+        type="text"
+        class="nisinput rotation-name-input"
+        [(ngModel)]="rotation.Name"
+        placeholder="Rotation Name"
+        (input)="onRotationChange()"
+        />
+      <input
+        type="number"
+        class="nisinput rotation-wave-input"
+        [(ngModel)]="rotation.Wave"
+        placeholder="Phase/Wave"
+        (input)="onRotationChange()"
+        />
+      @if (showDetails) {
+        <button
+          class="nisbutton"
+          (click)="showDetails = false"
+          title="Hide Rotation Details"
+          >
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      }
+      @if (!showDetails) {
+        <button
+          class="nisbutton"
+          (click)="onShowDetails()"
+          title="Show Rotation Details"
+          >
+          <i class="fa-solid fa-eye-slash"></i>
+        </button>
+      }
+    </div>
+  }
 
   <!-- preview -->
   <rm-rotation-preview
@@ -41,7 +50,7 @@
     [index]="rotationIndex"
   ></rm-rotation-preview>
 
-  @if (showDetails) {
+  @if (showDetails && !previewOnly) {
     <div class="rotation-details center-aligned">
       <!-- AbilitySelections -->
       <div
