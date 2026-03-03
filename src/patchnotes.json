@@ -148,6 +148,13 @@
         "Added a new setting in the rotation section where you can specify a phase/wave for each rotation. The app will then automatically switch to the correct rotation when it detects a phase/wave change in the game.",
         "This feature is experimental and may not work perfectly in all situations. Please report any issues on the discord server."
       ]
+    },
+    {
+      "version": "3.1.0",
+      "description": "Well Jagex went and broke everything by changing all the abilities! You will likely find that some of your old rotations now have big blank spots in them because the ability that used to be there no longer exists!",
+      "changes": [
+        "Updated available abilities to be in line with the new combat changes."
+      ]
     }
 
   ]
