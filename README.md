@@ -1,6 +1,6 @@
 # Rotation Master
 
-#### current version: v3.0.3
+#### current version: v3.1.0
 
 link: https://ellamental2.github.io/RotationMaster/
 
