@@ -44,8 +44,4 @@ You can cycle between rotations by pressing the main alt1 keybind (default alt +
 
 ## Special thanks to:
 
-[RS3 Vikings](Discord.gg/rs3vikings) for being a great clan who are willing to be guinea pigs/testers
-
-and
-
 [PVME Discord](https://discord.gg/pvme) for allowing me to use their images and helping with rotations.
