@@ -1,7 +1,7 @@
 import { CdkDragDrop, CdkDropList, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { transformAbilitySelectionsToString, transformStringToAbilitySelections } from '../../abilitiesLookup';
-import { Ability, AbilitySelection, Rotation } from '../../models';
+import { Ability, AbilitySelection, Rotation, Trigger, TriggerTypeEnum } from '../../models';
 import { RotationPreview } from '../rotation-preview/rotation-preview';
 import { AbilitySelector } from '../ability-selector/ability-selector';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +31,26 @@ export class RotationContainerComponent implements OnDestroy {
   @Output() loading = new EventEmitter<boolean>();
   @Output() focusOnRotation = new EventEmitter<number>();
   // @Output() reorderRotation = new EventEmitter<{ previousIndex: number, newIndex: number }>();
+
+  readonly TriggerTypeEnum = TriggerTypeEnum;
+
+  get triggerType(): string {
+    return this.rotation.Trigger?.Type ?? 'None';
+  }
+
+  onTriggerTypeChange(type: string): void {
+    this.rotation.Trigger = type === 'None'
+      ? null
+      : new Trigger(type as TriggerTypeEnum, this.rotation.Trigger?.Value ?? '');
+    this.onRotationChange();
+  }
+
+  onTriggerValueChange(value: string): void {
+    if (this.rotation.Trigger) {
+      this.rotation.Trigger.Value = value;
+      this.onRotationChange();
+    }
+  }
 
   // Modal properties
   isEditModalVisible: boolean = false;

@@ -1,5 +1,8 @@
 import { AfterViewInit, Component, DOCUMENT, Inject, signal } from '@angular/core';
-import { BoolSettingConfig, IPatch, Patch, Position, RangeSettingConfig, RotationSet, SettingConfig, SettingTypeEnum } from '../models';
+import {
+  BoolSettingConfig, IPatch, Patch, Position, RangeSettingConfig, RotationSet, SettingConfig, SettingTypeEnum,
+  TriggerTypeEnum
+} from '../models';
 import { blankSettings } from '../assets/blankSettings';
 import patchnotes from '../patchnotes.json';
 import { PatchNotesComponent } from './patch-notes/patch-notes';
@@ -7,6 +10,7 @@ import { RotationSetComponent } from './rotation-set/rotation-set';
 import { Settings } from './settings/settings';
 import { toCanvas } from 'html-to-image';
 import * as a1lib from 'alt1';
+import * as chatbox from 'alt1/chatbox'
 import * as a1base from 'alt1/base';
 import * as ocr from 'alt1/ocr';
 import Tesseract from 'tesseract.js';
@@ -18,7 +22,7 @@ import Tesseract from 'tesseract.js';
   styleUrl: './app.scss'
 })
 export class App implements AfterViewInit {
-  
+
 
   imgs: any = {};
 
@@ -26,7 +30,7 @@ export class App implements AfterViewInit {
   }
 
   protected readonly title = signal('RotationMaster');
-  protected readonly version = signal('3.1.0');
+  protected readonly version = signal('3.2.0');
   protected readonly appName = signal('rotationMaster');
 
   patchNotes: IPatch[] = [];
@@ -35,16 +39,16 @@ export class App implements AfterViewInit {
   selectedIndex: number = 0;
   updatingOverlayPosition = false;
   overlayInitialized: boolean = false;
-  
+
   // Settings related properties
   settings: SettingConfig[] = [];
   elementCache: Record<string, HTMLElement | null> = {};
   Output: HTMLElement | null = null;
-  
+
   // Settings signals
   protected readonly rangeSettings = signal<RangeSettingConfig[]>([]);
   protected readonly boolSettings = signal<BoolSettingConfig[]>([]);
-  
+
   //get a specific setting value
   getSettingValue(name: string): any {
     const setting = this.settings.find(s => s.name === name);
@@ -100,7 +104,7 @@ export class App implements AfterViewInit {
       "health": healthImg
     });
   }
-  
+
   ngAfterViewInit() {
     // Use setTimeout to ensure all child components are fully rendered
     setTimeout(() => {
@@ -115,7 +119,7 @@ export class App implements AfterViewInit {
     const settingToUpdate = this.settings.find(setting => setting.name === settingName);
     if (settingToUpdate) {
       settingToUpdate.value = settingValue;
-      
+
       // Update signals if needed
       if (settingToUpdate.type === SettingTypeEnum.Range) {
         this.rangeSettings.set(this.settings.filter(s => s.type === SettingTypeEnum.Range) as RangeSettingConfig[]);
@@ -129,7 +133,7 @@ export class App implements AfterViewInit {
     currentSettings[settingName] = settingValue;
     localStorage.setItem(`${this.appName}_settings`, JSON.stringify(currentSettings));
   }
-  
+
   async showPatchNotes(showAll: boolean) {
     const lastKnownVersion = showAll ? '0.0.1' : this.settings.find(s => s.name === 'lastKnownVersion')?.value || '0.0.1';
 
@@ -189,7 +193,7 @@ export class App implements AfterViewInit {
         s.value = savedSettings[s.name] || s.value;
       });
     }
-    
+
     // Initialize range and bool settings signals
     this.rangeSettings.set(this.settings.filter(s => s.type === SettingTypeEnum.Range && !s.hidden) as RangeSettingConfig[]);
     this.boolSettings.set(this.settings.filter(s => s.type === SettingTypeEnum.Boolean && !s.hidden) as BoolSettingConfig[]);
@@ -220,7 +224,7 @@ export class App implements AfterViewInit {
   exitPreviewMode(): void {
     this.onUpdateSetting({ name: 'previewOnly', value: false });
   }
-  
+
   cycleRotationSet() {
     var numRots = this.selectedRotationSet?.Data.length || 0;
     if (numRots <= 1) { return; }
@@ -235,7 +239,7 @@ export class App implements AfterViewInit {
 
     // Show rotation name label overlay
     this.showRotationNameOverlay();
-    
+
   }
 
   private initializeOverlay() {
@@ -282,10 +286,10 @@ export class App implements AfterViewInit {
   private findWave(): Position | null {
     let img = a1base.captureHoldFullRs();
 
-     // try phase
-    poslist = img.findSubimage(this.imgs['phase']);
+    // Declare poslist once at the top
+    let poslist = img.findSubimage(this.imgs['phase']);
 
-    if (poslist.length > 0){
+    if (poslist.length > 0) {
       return new Position(
         poslist[0].x,
         poslist[0].y,
@@ -293,11 +297,11 @@ export class App implements AfterViewInit {
         24,
         24,
         12
-      )
-    };
+      );
+    }
 
-    var poslist = img.findSubimage(this.imgs['wave']);
-    if (poslist.length > 0){
+    poslist = img.findSubimage(this.imgs['wave']);
+    if (poslist.length > 0) {
       return new Position(
         poslist[0].x - 10,
         poslist[0].y - 24,
@@ -308,10 +312,8 @@ export class App implements AfterViewInit {
       );
     }
 
-    // try kiln wave
     poslist = img.findSubimage(this.imgs['kiln_wave']);
-
-    if(poslist.length > 0) {
+    if (poslist.length > 0) {
       return new Position(
         poslist[0].x + 21,
         poslist[0].y - 15,
@@ -363,50 +365,47 @@ export class App implements AfterViewInit {
     return null;
   }
 
-  async updateOverlayPosition(){
-    let oldPosition = this.getSettingValue('overlayPosition') || { x: 100, y: 100 };
+  async updateOverlayPosition() {
     this.updatingOverlayPosition = true;
-    this.getById('rotationMaster')?.classList.toggle('positioning', this.updatingOverlayPosition);
-    
+    this.getById('rotationMaster')?.classList.toggle('positioning', true);
+
     const updatePosition = async () => {
-      if (!this.updatingOverlayPosition) {
-        return;
-      }
-      
+      if (!this.updatingOverlayPosition) return;
+
       alt1.setTooltip('Press Alt+1 to save position');
-      let abilitiesElement = this.getById('OverlayCanvasOutput');
+
+      const abilitiesElement = this.getById('OverlayCanvasOutput');
       const uiScale = this.getSettingValue('uiScale') || 100;
+      const mouse = a1lib.getMousePosition();
+
+      const mouseX = mouse?.x ?? 100;
+      const mouseY = mouse?.y ?? 100;
+      const elementWidth = abilitiesElement?.offsetWidth ?? 0;
+      const elementHeight = abilitiesElement?.offsetHeight ?? 0;
+
       this.onUpdateSetting({
         name: 'overlayPosition',
         value: {
-          x: Math.floor(
-            a1lib.getMousePosition()?.x ?? 100 -
-            (uiScale / 100) * (abilitiesElement?.offsetWidth ?? 2 / 2)
-          ),
-          y: Math.floor(
-            a1lib.getMousePosition()?.y ?? 100 -
-              (uiScale / 100) * (abilitiesElement?.offsetHeight ?? 2 / 2)
-          )
+          x: Math.floor(mouseX - (uiScale / 100) * (elementWidth / 2)),
+          y: Math.floor(mouseY - (uiScale / 100) * (elementHeight / 2))
         }
       });
-      
-      // Schedule next update using requestAnimationFrame for smooth updates
+
       requestAnimationFrame(() => {
-        updatePosition(); 
-        
-        // Check if current rotation has abilities to show appropriate message
         const selectedRotation = this.selectedRotationSet.Data[this.selectedIndex ?? 0];
-        const hasAbilities = selectedRotation && selectedRotation.Data.some(selection => selection.SelectedAbility);
-        const message = hasAbilities ? "Updating overlay position..." : "Populate a rotation for better positioning...";
-        
+        const hasAbilities = selectedRotation?.Data.some(s => s.SelectedAbility);
+        const message = hasAbilities
+          ? "Updating overlay position..."
+          : "Populate a rotation for better positioning...";
+
         this.showRotationNameOverlay(message);
+        updatePosition();
       });
     };
-    
-    // Start the position update loop
+
     updatePosition();
   }
-  
+
   stopUpdatingOverlayPosition() {
     this.updatingOverlayPosition = false;
     this.getById('rotationMaster')?.classList.toggle('positioning', false);
@@ -419,46 +418,92 @@ export class App implements AfterViewInit {
     const previewId = `rotation-preview-${this.selectedIndex}`;
     return this.getById(previewId);
   }
-  
+
+  private chatReader = new chatbox.default();
+
+  private async readChatbox(): Promise<string | null> {
+    try {
+      let img = a1base.captureHoldFullRs();
+      if (!this.chatReader.find(img)) return this.currentChatLine; // keep last known
+      let lines = this.chatReader.read(img);
+      if (!lines || lines.length === 0) return this.currentChatLine;
+      return lines[lines.length - 1]?.text ?? this.currentChatLine;
+    } catch {
+      return this.currentChatLine;
+    }
+  }
+
   private currentBossHealth: number | null = null;
   private currentWave: number | null = null;
+  protected currentChatLine: string | null = null;
+
+  private lastRenderedHash: string = '';
+  private lastRenderedImage: { encoded: string, width: number } | null = null;
+
+  private getRotationHash(rotationIndex: number): string {
+    const rotation = this.selectedRotationSet.Data[rotationIndex];
+    if (!rotation) return '';
+    // Cheap hash: index + name + ability titles joined
+    const abilityStr = rotation.Data
+      .filter(s => s.SelectedAbility)
+      .map(s => s.SelectedAbility!.Title)
+      .join(',');
+    const pos = this.getSettingValue('overlayPosition') || { x: 0, y: 0 };
+    return `${rotationIndex}|${rotation.Name}|${abilityStr}|${this.getSettingValue('uiScale')}|${(pos as any).x},${(pos as any).y}`;
+  }
 
   startOverlay() {
     const refreshRate = this.getSettingValue('overlayRefreshRate') || 50;
     let overlayPosition;
 
     const updateOverlay = async () => {
-      // try to get the current wave
+      // Trigger detection runs every tick regardless of render state
       let wavePos = this.findWave();
       if (wavePos) {
         let waveNum = await this.readImageNum(wavePos);
         if (waveNum && this.currentWave !== waveNum) {
-          // we found a wave number, do something with it
-            this.currentWave = waveNum;
-            console.log("Current wave/phase: " + waveNum);
+          this.currentWave = waveNum;
+          console.log("Current wave/phase: " + waveNum);
         }
       }
 
-      // TODO: Fix this, health reading is very unreliable
-      // let bossHealthPos = this.findHealth();
-      // if (bossHealthPos) {
-      //   let bossHealth = await this.readImageNum(bossHealthPos);
-      //   if (bossHealth && this.currentBossHealth !== bossHealth) {
-      //     // we found a wave number, do something with it
-      //       this.currentBossHealth = bossHealth;
-      //       console.log("Boss health: " + bossHealth);
-      //   }
-      // }
+      this.currentChatLine = await this.readChatbox();
 
-      if (this.currentWave !== null &&
-        this.selectedRotationSet.Data.some(rs => rs.Wave == this.currentWave) &&
-        this.selectedRotationSet.Data[this.selectedIndex]?.Wave != this.currentWave) {
-          this.selectedIndex = this.selectedRotationSet.Data.findIndex(rs => rs.Wave == this.currentWave);
-          this.showRotationNameOverlay();
+      const matchedIndex = this.findRotationIndexByTrigger(
+        this.currentWave,
+        this.currentChatLine,
+        this.currentBossHealth
+      );
+
+      if (this.shouldSwitchRotation(matchedIndex)) {
+        this.selectedIndex = matchedIndex;
+        this.lastRenderedHash = ''; // force re-render on switch
+        this.showRotationNameOverlay();
       }
 
+      // Skip expensive re-render if nothing has changed — but still re-push cached image to keep overlay alive
+      const currentHash = this.getRotationHash(this.selectedIndex);
+      if (currentHash === this.lastRenderedHash) {
+        if (this.lastRenderedImage) {
+          alt1.overLaySetGroup('rotMasterRegion');
+          alt1.overLayFreezeGroup('rotMasterRegion');
+          alt1.overLayClearGroup('rotMasterRegion');
+          alt1.overLayImage(
+            this.getSettingValue('overlayPosition')?.x ?? 100,
+            this.getSettingValue('overlayPosition')?.y ?? 100,
+            this.lastRenderedImage.encoded,
+            this.lastRenderedImage.width,
+            refreshRate
+          );
+          alt1.overLayRefreshGroup('rotMasterRegion');
+        }
+        setTimeout(() => requestAnimationFrame(updateOverlay), refreshRate);
+        return;
+      }
+      this.lastRenderedHash = currentHash;
+
       const selectedRotation = this.selectedRotationSet.Data[this.selectedIndex ?? 0] || this.selectedRotationSet;
-      
+
       if (!selectedRotation) {
         console.error('No rotation is selected.');
         return;
@@ -487,12 +532,12 @@ export class App implements AfterViewInit {
 
       // Check if the overlay has content and visible dimensions
       const computedStyle = getComputedStyle(overlay);
-      
+
       // Check if element is actually visible
-      const isVisible = computedStyle.display !== 'none' && 
-                       computedStyle.visibility !== 'hidden' && 
+      const isVisible = computedStyle.display !== 'none' &&
+                       computedStyle.visibility !== 'hidden' &&
                        computedStyle.opacity !== '0';
-      
+
       if (!isVisible) {
         // Schedule the next update
         setTimeout(() => requestAnimationFrame(updateOverlay), refreshRate);
@@ -506,39 +551,39 @@ export class App implements AfterViewInit {
       overlay.style.display = 'block';
       overlay.style.width = 'auto';
       overlay.style.height = 'auto';
-      
+
       // Force reflow
       overlay.offsetHeight;
 
       // Try to get dimensions from multiple sources
       let width = overlay.offsetWidth;
       let height = overlay.offsetHeight;
-      
+
       // If still zero, try scroll dimensions
       if (width === 0 || height === 0) {
         width = overlay.scrollWidth;
         height = overlay.scrollHeight;
       }
-      
+
       // If still zero, try getBoundingClientRect after forcing layout
       if (width === 0 || height === 0) {
         const newRect = overlay.getBoundingClientRect();
         width = newRect.width;
         height = newRect.height;
       }
-      
+
       // Calculate content dimensions based on children if still zero
       if (width === 0 || height === 0) {
         const children = overlay.children;
         if (children.length > 0) {
           let maxWidth = 0;
           let totalHeight = 0;
-          
+
           for (let i = 0; i < children.length; i++) {
             const child = children[i] as HTMLElement;
             const childRect = child.getBoundingClientRect();
             const childComputedStyle = getComputedStyle(child);
-            
+
             // Get child dimensions
             const childWidth = Math.max(
               childRect.width,
@@ -552,16 +597,16 @@ export class App implements AfterViewInit {
               child.scrollHeight,
               parseInt(childComputedStyle.height, 10) || 0
             );
-            
+
             maxWidth = Math.max(maxWidth, childWidth);
             totalHeight += childHeight;
           }
-          
+
           if (maxWidth > 0) width = maxWidth;
           if (totalHeight > 0) height = totalHeight;
         }
       }
-      
+
       // Restore original styles
       overlay.style.visibility = '';
       overlay.style.position = '';
@@ -571,7 +616,7 @@ export class App implements AfterViewInit {
       overlay.style.height = '';
 
       if (width === 0 || height === 0) {
-        
+
         // Check if children have dimensions
         if (overlay.children.length > 0) {
           for (let i = 0; i < overlay.children.length; i++) {
@@ -580,7 +625,7 @@ export class App implements AfterViewInit {
             // console.log(`Child ${i}:`, child.tagName, childRect);
           }
         }
-        
+
         // Schedule the next update
         setTimeout(() => requestAnimationFrame(updateOverlay), refreshRate);
         return;
@@ -591,46 +636,46 @@ export class App implements AfterViewInit {
       const uiScale = this.getSettingValue('uiScale') || 100;
       const abilitiesPerRow = this.getSettingValue('abilitiesPerRow') || 10;
       const overlayPosition = this.getSettingValue('overlayPosition') || { x: 100, y: 100 };
-      
+
       try {
         const totalTrackedItems = selectedRotation.Data.filter((abilitySelection) => abilitySelection.SelectedAbility).length;
-        
+
         // Calculate dimensions with minimum values, using detected dimensions as fallback
         // Account for padding and border in the dimensions
         const paddingLeft = parseInt(computedStyle.paddingLeft, 10) || 0;
         const paddingRight = parseInt(computedStyle.paddingRight, 10) || 0;
         const paddingTop = parseInt(computedStyle.paddingTop, 10) || 0;
         const paddingBottom = parseInt(computedStyle.paddingBottom, 10) || 0;
-        
+
         const borderLeft = parseInt(computedStyle.borderLeftWidth, 10) || 0;
         const borderRight = parseInt(computedStyle.borderRightWidth, 10) || 0;
         const borderTop = parseInt(computedStyle.borderTopWidth, 10) || 0;
         const borderBottom = parseInt(computedStyle.borderBottomWidth, 10) || 0;
-        
+
         const totalHorizontalPadding = paddingLeft + paddingRight + borderLeft + borderRight;
         const totalVerticalPadding = paddingTop + paddingBottom + borderTop + borderBottom;
-        
+
         const minWidth = Math.max(
           width, // Use actual content width
           Math.min(totalTrackedItems * 40 + totalHorizontalPadding, 800), // Estimate based on content + padding
           50 // Absolute minimum
         );
-        
+
         // Significantly improve height calculation to ensure all images are visible
         // Get actual row count based on the layout in rotation-preview component
         const rowCount = Math.ceil(totalTrackedItems / abilitiesPerRow);
-        
+
         // Get the actual rows from the DOM if possible for more accurate measurement
         const rowElements = overlay.querySelectorAll('.rotation-preview-row');
-        
+
         // Determine the scaled row height based on UI scale
         // At lower UI scales, we need relatively more pixels per row
         const baseRowHeight = 60; // Increased base height per row
         const scaleFactor = Math.max(2.0, 100 / Math.max(uiScale, 10)); // Inverse scale factor, with minimum
         const scaledRowHeight = baseRowHeight * scaleFactor;
-        
+
         let totalRowHeight = 0;
-        
+
         // Calculate total height by measuring actual row elements if available
         if (rowElements && rowElements.length > 0) {
           // Count the total number of ability images to handle more complex layouts
@@ -639,15 +684,15 @@ export class App implements AfterViewInit {
             const rowElement = rowElements[i] as HTMLElement;
             const imagesInRow = rowElement.querySelectorAll('.ability-image').length;
             totalImages += imagesInRow;
-            
+
             // Get the measured height or use our scaled calculation
             const measuredHeight = Math.max(rowElement.offsetHeight, rowElement.scrollHeight);
             totalRowHeight += measuredHeight > 0 ? measuredHeight : scaledRowHeight;
           }
-          
+
           // Add extra buffer for each row and scale it properly
           totalRowHeight += rowElements.length * 20 * scaleFactor;
-          
+
           // Apply additional scaling for large numbers of images
           if (totalImages > 50) {
             totalRowHeight *= 1.2; // Add 20% more height for very large rotations
@@ -656,7 +701,7 @@ export class App implements AfterViewInit {
           // Fallback calculation with generous spacing
           totalRowHeight = rowCount * scaledRowHeight;
         }
-        
+
         // Ensure we never go below the measured height, apply UI scaling and add extra bottom padding
         // The scaling divisor compensates for the pixelRatio in the toCanvas function
         const calculatedHeight = Math.max(
@@ -686,13 +731,15 @@ export class App implements AfterViewInit {
           ?.getImageData(0, 0, dataUrl.width, dataUrl.height);
 
         if (base64ImageString && base64ImageString.width > 0 && base64ImageString.height > 0) {
+          const encoded = a1lib.encodeImageString(base64ImageString);
+          this.lastRenderedImage = { encoded, width: base64ImageString.width };
           alt1.overLaySetGroup('rotMasterRegion');
           alt1.overLayFreezeGroup('rotMasterRegion');
           alt1.overLayClearGroup('rotMasterRegion');
           alt1.overLayImage(
             overlayPosition.x,
             overlayPosition.y,
-            a1lib.encodeImageString(base64ImageString),
+            encoded,
             base64ImageString.width,
             refreshRate
           );
@@ -716,7 +763,7 @@ export class App implements AfterViewInit {
     // Start the first update
     requestAnimationFrame(updateOverlay);
   }
-  
+
   private showRotationNameOverlay(override: string | null = null) {
     const selectedRotation = this.selectedRotationSet.Data[this.selectedIndex];
     if (!selectedRotation || !selectedRotation.Name) {
@@ -725,7 +772,7 @@ export class App implements AfterViewInit {
 
     const overlayPosition = this.getSettingValue('overlayPosition') || { x: 100, y: 100 };
     const rotationName = override ?? selectedRotation.Name;
-    
+
     // Create a canvas for the label
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -811,4 +858,31 @@ export class App implements AfterViewInit {
       img.onerror = reject;
     });
   }
+
+  private findRotationIndexByTrigger(wave: number | null, chatLine: string | null, health: number | null): number {
+    return this.selectedRotationSet.Data.findIndex(rotation => {
+      const trigger = rotation.Trigger;
+      if (!trigger) return false;
+
+      switch (trigger.Type) {
+        case TriggerTypeEnum.Wave:
+          return wave !== null && +trigger.Value === wave;
+
+        case TriggerTypeEnum.Chat:
+          return chatLine !== null &&
+            chatLine.toLowerCase().includes(trigger.Value.toLowerCase());
+
+        case TriggerTypeEnum.Health:
+          return health !== null && health <= +trigger.Value;
+
+        default:
+          return false;
+      }
+    });
+  }
+
+  private shouldSwitchRotation(matchedIndex: number): boolean {
+    return matchedIndex !== -1 && matchedIndex !== this.selectedIndex;
+  }
+
 }

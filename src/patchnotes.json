@@ -155,7 +155,18 @@
       "changes": [
         "Updated available abilities to be in line with the new combat changes."
       ]
+    },
+    {
+      "version": "3.2.0",
+      "description": "Trigger System - Rotations can now auto-switch based on wave/phase number or in-game chat messages.",
+      "changes": [
+        "Replaced the Wave/Phase number field with a flexible Trigger system. Each rotation can have one trigger: Wave/Phase (same as before), or Chat (switches when the chatbox contains a specified string).",
+        "Chat triggers are case-insensitive and match on partial text, so you can trigger on boss dialogue, broadcast messages, or any chat event.",
+        "Old rotations with a Wave number set will be automatically migrated to the new format on load.",
+        "Fixed a bug where the overlay position calculation was not correctly applying the UI scale offset.",
+        "Fixed a bug in wave detection where a variable was used before it was declared.",
+        "Performance improvement: the overlay image is now only re-rendered when the rotation content changes, reducing CPU usage."
+      ]
     }
-
   ]
 }

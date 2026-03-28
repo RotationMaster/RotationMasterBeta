@@ -15,13 +15,25 @@
         placeholder="Rotation Name"
         (input)="onRotationChange()"
         />
-      <input
-        type="number"
-        class="nisinput rotation-wave-input"
-        [(ngModel)]="rotation.Wave"
-        placeholder="Phase/Wave"
-        (input)="onRotationChange()"
-        />
+      <select
+        class="nisinput trigger-type-select"
+        [ngModel]="triggerType"
+        (ngModelChange)="onTriggerTypeChange($event)"
+        title="Auto-switch trigger"
+        >
+        <option value="None">No trigger</option>
+        <option [value]="TriggerTypeEnum.Wave">Wave/Phase</option>
+        <option [value]="TriggerTypeEnum.Chat">Chat</option>
+      </select>
+      @if (rotation.Trigger) {
+        <input
+          [type]="rotation.Trigger.Type === TriggerTypeEnum.Wave ? 'number' : 'text'"
+          class="nisinput trigger-value-input"
+          [ngModel]="rotation.Trigger.Value"
+          (ngModelChange)="onTriggerValueChange($event)"
+          [placeholder]="rotation.Trigger.Type === TriggerTypeEnum.Wave ? 'Wave/Phase #' : 'Chat contains...'"
+          />
+      }
       @if (showDetails) {
         <button
           class="nisbutton"

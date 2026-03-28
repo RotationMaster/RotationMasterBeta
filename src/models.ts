@@ -76,18 +76,40 @@ export class RotationSet {
     }
 }
 
-export class Rotation {
-    Id: number;
-    Name: string;
-    Data: AbilitySelection[];
-    Wave: number | null = null;
+export enum TriggerTypeEnum {
+  Wave = 'Wave',
+  Chat = 'Chat',
+  Health = 'Health'
+}
 
-    constructor(id: number | null = null, name: string | null = null, data: AbilitySelection[] | null = null, wave: number | null = null) {
-        this.Id = id ?? 0;
-        this.Name = name ?? 'New Rotation';
-        this.Data = data ?? [new AbilitySelection()];
-        this.Wave = wave ?? null;
-    }
+export class Trigger {
+  Type: TriggerTypeEnum;
+  Value: string; // Wave uses "1", "2" etc — keeps it uniform
+
+  constructor(type: TriggerTypeEnum, value: string) {
+    this.Type = type;
+    this.Value = value;
+  }
+}
+
+export class Rotation {
+  Id: number;
+  Name: string;
+  Data: AbilitySelection[];
+  Trigger: Trigger | null;  // replaces Wave — at most one per rotation
+
+  constructor(
+    id: number | null = null,
+    name: string | null = null,
+    data: AbilitySelection[] | null = null,
+    trigger: Trigger | null = null
+  ) {
+    this.Id = id ?? 0;
+    this.Name = name ?? 'New Rotation';
+    this.Data = data ?? [new AbilitySelection()];
+    this.Trigger = trigger ?? null;
+  }
+
 }
 
 export class AbilitySelection {
@@ -107,8 +129,8 @@ export class Ability {
     Emoji: string;
     EmojiId: string;
     Category: string;
-    Src: string;      
-    
+    Src: string;
+
     constructor(title: string, emoji: string, emojiId: string, category: string, src: string) {
         this.Title = title;
         this.Emoji = emoji;

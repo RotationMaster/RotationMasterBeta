@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy, input } from '@angular/core';
-import { Ability, AbilitySelection, Rotation, RotationSet } from '../../models';
+import {Ability, AbilitySelection, Rotation, RotationSet, Trigger, TriggerTypeEnum} from '../../models';
 import {CdkDragDrop, CdkDropList, CdkDrag, moveItemInArray} from '@angular/cdk/drag-drop';
 import abilities from '../../assets/abilities.json'; // Assuming you have an abilities.json file in assets
 import { lookupAbilityByEmoji } from '../../abilitiesLookup';
@@ -106,11 +106,20 @@ export class RotationSetComponent implements OnDestroy {
   }
 
   reviveRotation(obj: any): Rotation {
+    // Migrate legacy Wave field to new Trigger format
+    let trigger: Trigger | null = null;
+
+    if (obj.Trigger) {
+      trigger = new Trigger(obj.Trigger.Type, obj.Trigger.Value);
+    } else if (obj.Wave != null) {
+      trigger = new Trigger(TriggerTypeEnum.Wave, String(obj.Wave));
+    }
+
     return new Rotation(
       obj.Id,
       obj.Name,
-      obj.Data?.map((obj: any) => this.reviveAbilitySelection(obj)),
-      obj.Wave
+      obj.Data?.map((s: any) => this.reviveAbilitySelection(s)),
+      trigger
     );
   }
 
@@ -144,7 +153,7 @@ export class RotationSetComponent implements OnDestroy {
 
   newRotationSet(): void {
     this.rotationSet = new RotationSet();
-    // Initialize visibility for any existing rotations  
+    // Initialize visibility for any existing rotations
     this.rotationDetailsVisibility = {};
     this.rotationSet.Data.forEach(rotation => {
       this.rotationDetailsVisibility[rotation.Id] = true;
@@ -157,19 +166,19 @@ export class RotationSetComponent implements OnDestroy {
     if (found) {
       // Deep clone and revive to ensure class instances
       this.rotationSet = this.reviveRotationSet(JSON.parse(JSON.stringify(found)));
-      
+
       // Initialize visibility for all rotations (default to false when switching)
       this.rotationDetailsVisibility = {};
       this.rotationSet.Data.forEach(rotation => {
         this.rotationDetailsVisibility[rotation.Id] = false;
       });
-      
+
       this.rotationSetChange.emit(this.rotationSet);
     }
   }
 
   get hasWaveRotations(): boolean {
-    return this.rotationSet?.Data?.some(rotation => rotation.Wave) ?? false;
+    return this.rotationSet?.Data?.some(rotation => rotation.Trigger?.Type == TriggerTypeEnum.Wave ) ?? false;
   }
 
   addRotation(): void {
@@ -178,15 +187,15 @@ export class RotationSetComponent implements OnDestroy {
       const maxId = this.rotationSet.Data.reduce((max, r) => r.Id > max ? r.Id : max, 0);
       const newRotation = new Rotation(maxId + 1);
       this.rotationSet.Data.push(newRotation);
-      
+
       // Initialize visibility for new rotation
       this.rotationDetailsVisibility[newRotation.Id] = true;
-      
+
       // If this is the first rotation, automatically select it
       if (this.rotationSet.Data.length === 1) {
         this.onRotationSelected(newRotation.Id);
       }
-      
+
       this.onFocusOnRotation(newRotation.Id);
       this.rotationSetChange.emit(this.rotationSet);
     }
@@ -200,12 +209,12 @@ export class RotationSetComponent implements OnDestroy {
     const index = this.rotationSet.Data.findIndex(r => r.Id === rotation.Id);
     if (index !== -1) {
       this.rotationSet.Data[index] = rotation;
-      
+
       // Debounce the emission to reduce change detection cycles
       if (this.updateTimeout) {
         clearTimeout(this.updateTimeout);
       }
-      
+
       this.updateTimeout = setTimeout(() => {
         this.rotationSetChange.emit(this.rotationSet);
         this.cdr.markForCheck();
@@ -248,7 +257,7 @@ export class RotationSetComponent implements OnDestroy {
     Object.keys(this.rotationDetailsVisibility).forEach(key => {
       this.rotationDetailsVisibility[+key] = false;
     });
-    
+
     // Show details only for the focused rotation
     this.rotationDetailsVisibility[rotationId] = true;
     this.cdr.markForCheck();
@@ -283,7 +292,7 @@ export class RotationSetComponent implements OnDestroy {
 
     const rotationSetJson = JSON.stringify(this.rotationSet, null, 2);
     const fileName = `${this.rotationSet.Name.trim().replace(/\s+/g, '_')}_RotationSet.json`;
-    
+
     // More Angular-friendly approach
     this.downloadFile(rotationSetJson, fileName, 'application/json');
   }
@@ -291,18 +300,18 @@ export class RotationSetComponent implements OnDestroy {
   private downloadFile(data: string, fileName: string, mimeType: string): void {
     const blob = new Blob([data], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    
+
     // Create a temporary anchor element
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = fileName;
     anchor.style.display = 'none';
-    
+
     // Append to body, click, and remove
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
-    
+
     // Clean up the object URL
     URL.revokeObjectURL(url);
   }
@@ -313,46 +322,46 @@ export class RotationSetComponent implements OnDestroy {
     fileInput.type = 'file';
     fileInput.accept = '.json,application/json';
     fileInput.style.display = 'none';
-    
+
     // Handle file selection
     fileInput.onchange = (event: any) => {
       const file = event.target.files[0];
       if (!file) {
         return;
       }
-      
+
       // Validate file type
       if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
         console.error('Invalid file type selected');
         alert('Please select a valid JSON file');
         return;
       }
-      
+
       // Set loading state before starting import
       this.setLoadingState(true);
-      
+
       // Read the file
       const reader = new FileReader();
       reader.onload = async (e: any) => {
         try {
           const fileContent = e.target.result;
-          
+
           // Parse the rotation set data (now async with concurrent processing)
           const importedRotationSet = await this.parseRotationSetData(fileContent);
-          
+
           // Set the imported rotation set as the current rotation set
           this.rotationSet = this.reviveRotationSet(importedRotationSet);
-          
+
           // Initialize visibility for all imported rotations (default to false)
           this.rotationDetailsVisibility = {};
           this.rotationSet.Data.forEach(rotation => {
             this.rotationDetailsVisibility[rotation.Id] = false;
           });
-          
+
           this.rotationSetChange.emit(this.rotationSet);
-          
+
           alert(`Successfully imported rotation set: ${this.rotationSet.Name}`);
-          
+
         } catch (error) {
           console.error('Error importing rotation set:', error);
           alert(`Error importing rotation set: ${error}`);
@@ -361,20 +370,20 @@ export class RotationSetComponent implements OnDestroy {
           this.setLoadingState(false);
         }
       };
-      
+
       reader.onerror = () => {
         console.error('Error reading file');
         alert('Error reading file');
         this.setLoadingState(false);
       };
-      
+
       // Read the file as text
       reader.readAsText(file);
-      
+
       // Clean up
       document.body.removeChild(fileInput);
     };
-    
+
     // Trigger file selection
     document.body.appendChild(fileInput);
     fileInput.click();
@@ -405,7 +414,7 @@ export class RotationSetComponent implements OnDestroy {
     const normalizeAbilitySelection = async (selection: any): Promise<AbilitySelection> => {
       const selectedAbility = selection.selectedAbility || selection.SelectedAbility;
       let ability: Ability | null = null;
-      
+
       if (selectedAbility && selectedAbility.Emoji) {
         // Use lookup to find the ability by emoji for better consistency
         ability = lookupAbilityByEmoji(selectedAbility.Emoji) || selectedAbility;
@@ -423,19 +432,28 @@ export class RotationSetComponent implements OnDestroy {
     // Helper function to normalize rotation properties with concurrent processing
     const normalizeRotation = async (rotation: any): Promise<Rotation> => {
       const abilitySelections = rotation.data || rotation.Data || [];
-      
-      // Process all ability selections concurrently
+
       const normalizedSelections = await Promise.all(
         abilitySelections.map((selection: any) => normalizeAbilitySelection(selection))
       );
+
+      // Migrate legacy Wave field
+      let trigger: Trigger | null = null;
+      if (rotation.Trigger || rotation.trigger) {
+        const t = rotation.Trigger || rotation.trigger;
+        trigger = new Trigger(t.Type, t.Value);
+      } else if (rotation.Wave != null || rotation.wave != null) {
+        trigger = new Trigger(TriggerTypeEnum.Wave, String(rotation.Wave ?? rotation.wave));
+      }
 
       return {
         Id: rotation.id || rotation.Id || 0,
         Name: rotation.name || rotation.Name || this.defaultRotationName,
         Data: normalizedSelections,
-        Wave: rotation.wave || rotation.Wave || null
+        Trigger: trigger
       };
     };
+
 
     // Format 0: Current model with proper casing (Name, Data)
     if (
